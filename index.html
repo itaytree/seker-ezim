@@ -6,28 +6,6 @@
 <title>סקר עצים — אגף יער ואילנות</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
-  /* ════ GLOBAL UTILITY ════ */
-  .hidden { display: none !important; }
-
-  /* ════ MODAL OVERLAYS ════ */
-  #stats-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 3000;
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-  }
-  #stats-modal .modal-inner {
-    background: white; border-radius: 16px; padding: 24px;
-    max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto;
-    direction: rtl; font-family: inherit;
-  }
-  #csv-offset-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9900;
-    display: flex; align-items: flex-end; justify-content: center; overflow-y: auto;
-  }
-  #csv-offset-modal .modal-box {
-    max-width: 420px; width: 100%; margin: 0;
-    border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto;
-  }
-
   /* ════ CORE LAYOUT — fixed positioning, bulletproof ════ */
   html, body {
     height: 100%; margin: 0; padding: 0; overflow: hidden;
@@ -235,7 +213,7 @@
     bottom: 0;
     right: 72px; /* beside right panel */
   }
-  /* sidebar visibility handled by global .hidden */
+  #sidebar.hidden { display: none !important; }
 
   .sidebar-header {
     background: var(--green-pale);
@@ -358,7 +336,7 @@
     overflow: hidden;
     border: 1px solid var(--border);
   }
-
+  #list-panel.hidden { display: none; }
   .list-header {
     background: var(--green-pale);
     padding: 10px 12px;
@@ -559,7 +537,7 @@
     z-index: 9900; display: flex; align-items: flex-end; justify-content: center;
     overflow-y: auto;
   }
-
+  #dxf-modal.hidden, #dxf-result.hidden, #csv-offset-modal.hidden { display: none !important; }
 
   .modal-box, .result-box {
     background: #fff; border-radius: 16px 16px 0 0; padding: 26px;
@@ -636,7 +614,7 @@
     padding: 6px 12px; font-size: 13px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
-
+  #project-bar.hidden { display: none; }
   #project-name-display {
     font-weight: 700; color: var(--green-dark); font-size: 14px;
     flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -658,7 +636,7 @@
     align-items: center; justify-content: center;
     padding: 16px;
   }
-
+  #proj-modal.hidden { display: none; }
   .proj-modal-box {
     background: white; border-radius: 18px;
     width: 100%; max-width: 480px; max-height: 85vh;
@@ -797,7 +775,7 @@
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
   }
-
+  #login-screen.hidden { display: none; }
   .login-box {
     background: white; border-radius: 24px;
     padding: 40px 32px; text-align: center;
@@ -832,7 +810,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.18);
     padding: 8px; z-index: 2000; border: 1px solid var(--border);
   }
-
+  #user-menu.hidden { display: none; }
   .user-menu-item {
     padding: 10px 14px; border-radius: 8px; cursor: pointer;
     font-size: 13px; font-weight: 600; color: var(--text);
@@ -880,7 +858,7 @@
     padding: 8px 16px; font-size: 13px; white-space: nowrap;
     z-index: 600; pointer-events: none;
   }
-
+  #poly-hint.hidden { display: none; }
 
   </style>
 <script>
@@ -892,7 +870,7 @@
 // 2. APIs & Services → Enable: Google Drive API
 // 3. Credentials → OAuth 2.0 Client ID → Web application
 // 4. הוסף את הדומיין/כתובת שלך ל-Authorized JavaScript origins
-//    (לבדיקה מקומית: http://localhost וגם http://localhost:PORT)
+//  (לבדיקה מקומית: http://localhost וגם http://localhost:PORT)
 // 5. הכנס את ה-Client ID כאן:
 
 const GOOGLE_CLIENT_ID = '416615116755-r0tud282fp1sp9klo754lfp7a4i1h084.apps.googleusercontent.com';
@@ -901,12 +879,10 @@ const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapi
 
 window.gUser = null;
 </script>
-<!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer onload="onGsiLoad()" onerror="onGsiError()"></script>
 </head>
 <body>
 
-<!-- ══ LOGIN SCREEN ══ -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">🌳</div>
@@ -922,7 +898,6 @@ window.gUser = null;
   </div>
 </div>
 
-<!-- TOP BAR -->
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:8px">
     <span class="logo">🌳</span>
@@ -945,7 +920,6 @@ window.gUser = null;
   </div>
 </div>
 
-<!-- LEFT ACTION PANEL -->
 <div id="left-panel">
   <button class="lp-btn" onclick="openProjModal()" title="פרויקטים">
     <span class="lp-icon">📁</span><span class="lp-label">פרויקטים</span>
@@ -978,14 +952,8 @@ window.gUser = null;
   <button class="lp-btn lp-accent" onclick="exportExcel()" title="ייצוא Excel">
     <span class="lp-icon">📊</span><span class="lp-label">Excel</span>
   </button>
-  <button class="lp-btn" onclick="exportGeoJSON()" title="ייצוא GeoJSON" style="background:#2980b9;color:white;border-color:#2471a3">
-    <span class="lp-icon">🗺️</span><span class="lp-label">GeoJSON</span>
-  </button>
   <button class="lp-btn lp-blue" onclick="exportPhotosToDrive()" title="ייצוא תמונות ל-Drive">
     <span class="lp-icon">📷</span><span class="lp-label">תמונות</span>
-  </button>
-  <button class="lp-btn" onclick="showStatsModal()" title="סטטיסטיקות פרויקט" style="background:#8e44ad;color:white;border-color:#7d3c98">
-    <span class="lp-icon">📈</span><span class="lp-label">סטטס</span>
   </button>
   <div class="lp-sep"></div>
   <button class="lp-btn lp-danger" onclick="confirmClearTrees()" title="מחק כל העצים">
@@ -993,7 +961,6 @@ window.gUser = null;
   </button>
 </div>
 
-<!-- PROJECT BAR -->
 <div id="project-bar" class="hidden">
   <span id="project-name-display">ללא פרויקט</span>
   <a id="proj-drive-link" href="#" target="_blank" title="פתח תיקיית פרויקט ב-Drive" style="display:none;color:white;font-size:13px;text-decoration:none;opacity:0.85;padding:2px 6px;border:1px solid rgba(255,255,255,0.4);border-radius:6px">☁️ Drive</a>
@@ -1001,7 +968,6 @@ window.gUser = null;
   <button class="proj-btn" onclick="openProjModal()">📂 פרויקטים</button>
 </div>
 
-<!-- PROJECT MODAL -->
 <div id="proj-modal" class="hidden" onclick="if(event.target===this)closeProjModal()">
   <div class="proj-modal-box" onclick="event.stopPropagation()">
     <div class="proj-modal-header">
@@ -1025,7 +991,6 @@ window.gUser = null;
       <div class="proj-list" id="proj-list-container">
         <div class="proj-empty">⏳ טוען...</div>
       </div>
-      <!-- Drive file loaders (shown when Drive connected and project open) -->
       <div id="drive-file-actions" style="display:none;margin-top:14px;padding:12px;background:#f0f7ff;border:1px solid #b3d4f5;border-radius:10px">
         <div style="font-size:12px;font-weight:700;color:#1a4d8e;margin-bottom:8px">📂 טען קבצים מהפרויקט ב-Drive:</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1044,9 +1009,8 @@ window.gUser = null;
 
 
 
-<!-- ======= CSV OFFSET MODAL ======= -->
-<div id="csv-offset-modal" class="hidden" onclick="if(event.target===this)closeCsvOffsetModal()">
-  <div class="modal-box" onclick="event.stopPropagation()">
+<div id="csv-offset-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9900;display:flex;align-items:flex-end;justify-content:center;overflow-y:auto;" onclick="if(event.target===this)closeCsvOffsetModal()">
+  <div class="modal-box" style="max-width:420px;width:100%;margin:0;border-radius:16px 16px 0 0;max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()">
     <h2>🎯 כיוון מיקום עצים</h2>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
       הזז את כל העצים שיובאו מה-CSV יחד.<br>
@@ -1084,7 +1048,6 @@ window.gUser = null;
   </div>
 </div>
 
-<!-- ======= DXF OVERLAY MODAL ======= -->
 <div id="dxf-modal" class="hidden" onclick="if(event.target===this)closeDxfModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
     <h2>📐 הצגת שרטוט DXF על המפה</h2>
@@ -1115,7 +1078,6 @@ window.gUser = null;
         <button class="btn-save" style="flex:1;border:none;cursor:pointer" onclick="applyDxfLayers()">✅ עדכן תצוגה</button>
       </div>
     </div>
-    <!-- CRS Selector (always visible) -->
     <div style="margin-bottom:12px;padding:10px 12px;background:#f0f7ff;border:1px solid #b3d4f5;border-radius:10px">
       <div style="font-size:12px;font-weight:700;color:#1a4d8e;margin-bottom:6px">📡 מערכת קואורדינטות של השרטוט:</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1130,7 +1092,6 @@ window.gUser = null;
         </label>
       </div>
     </div>
-    <!-- Offset Panel -->
     <div id="dxf-offset-panel" style="margin-bottom:12px;padding:10px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px">
       <div style="font-size:12px;font-weight:700;color:#e65100;margin-bottom:8px">🎯 כיוון ידני (אם השרטוט מוסט מהמפה):</div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">
@@ -1163,19 +1124,15 @@ window.gUser = null;
 
 
 
-<!-- MAIN -->
 <div id="main">
-  <!-- MAP -->
   <div id="map"></div>
 
-  <!-- MAP CONTROLS -->
   <div class="map-control-group" style="left:10px; right:auto; top:10px; z-index:400;">
     <button class="map-btn" id="btn-aerial" onclick="toggleAerial()">🛰️ תצלום אוויר</button>
     <button class="map-btn" id="btn-gps" onclick="centerOnUser()">📍 מיקומי</button>
     <button class="map-btn" onclick="toggleListPanel()" id="btn-list">📋 רשימה</button>
   </div>
 
-  <!-- LABEL DISPLAY CONTROL -->
   <div id="label-ctrl">
     <div class="label-opt active" onclick="setLabelMode('number')" id="lbl-number">מס' עץ</div>
     <div class="label-opt" onclick="setLabelMode('species')" id="lbl-species">מין</div>
@@ -1183,16 +1140,13 @@ window.gUser = null;
     <div class="label-opt" onclick="setLabelMode('none')" id="lbl-none">ללא</div>
   </div>
 
-  <!-- FAB -->
   <div id="fab-group">
     <button id="fab" onclick="toggleAddMode()">➕ הוסף עץ</button>
     <button id="fab-poly" onclick="togglePolyMode()">⬡ הוסף פוליגון</button>
   </div>
 
-  <!-- POLY HINT -->
   <div id="poly-hint" class="hidden">לחץ להוספת נקודה • לחץ פעמיים לסיום</div>
 
-  <!-- TREE LIST PANEL -->
   <div id="list-panel" class="hidden">
     <div class="list-header">
       <h3>עצים בסקר</h3>
@@ -1202,10 +1156,7 @@ window.gUser = null;
   </div>
 
 
-</div>  <!-- end #main -->
-
-<!-- SIDEBAR / FORM — outside #main so overflow:hidden does not block touches -->
-<div id="sidebar" class="hidden">
+</div>  <div id="sidebar" class="hidden">
     <div class="sidebar-header">
       <h2>פרטי עץ</h2>
       <div style="display:flex;align-items:center;gap:8px">
@@ -1296,13 +1247,11 @@ window.gUser = null;
         <input type="number" id="f-canopy" step="0.5" min="0" placeholder="קוטר במטרים" oninput="onFormChange()">
       </div>
 
-      <!-- Total Score -->
       <div class="form-group">
         <label>הערות אגרונום</label>
         <textarea id="f-notes" placeholder="הערות, מצב, סביבה..." oninput="onFormChange()"></textarea>
       </div>
 
-      <!-- SURVEYED BUTTON -->
       <div style="padding: 4px 0 2px">
         <button class="btn-surveyed" id="btn-surveyed" onclick="toggleSurveyed()">
           <span id="surveyed-icon">📋</span>
@@ -1310,24 +1259,6 @@ window.gUser = null;
         </button>
       </div>
 
-      <!-- GUSH / HELKA -->
-      <div class="section-title">גוש / חלקה</div>
-      <div class="value-row" style="align-items:flex-end">
-        <div class="form-group" style="flex:1">
-          <label>גוש</label>
-          <input type="text" id="f-gush" placeholder="—" readonly style="background:#f4f4f4">
-        </div>
-        <div class="form-group" style="flex:1">
-          <label>חלקה</label>
-          <input type="text" id="f-helka" placeholder="—" readonly style="background:#f4f4f4">
-        </div>
-        <button onclick="fetchGushHelka()" style="
-          padding:8px 10px;border-radius:8px;border:1.5px solid #2980b9;
-          background:#ebf5fb;color:#2471a3;font-size:12px;font-weight:600;
-          cursor:pointer;margin-bottom:8px;white-space:nowrap">🔍 עדכן</button>
-      </div>
-
-      <!-- MOVE TREE BUTTON -->
       <div style="padding: 2px 0 4px">
         <button id="btn-move-tree" onclick="startMoveTree()" style="
           width:100%;padding:9px;border-radius:10px;border:1.5px solid #e0a800;
@@ -1339,7 +1270,6 @@ window.gUser = null;
         </button>
       </div>
 
-      <!-- PHOTO SECTION -->
       <div id="photo-section">
         <div class="section-title">תמונות</div>
         <div class="photo-grid" id="photo-grid">
@@ -1356,14 +1286,13 @@ window.gUser = null;
 </div>
 
 
-<!-- TOAST -->
 <div id="toast"></div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const TREE_SPECIES = [{"name": "Unknown", "scientific": "Unknown", "score": 0, "id": 513}, {"name": "אבוקדו אמריקני", "scientific": "Persea americana", "score": 3, "id": 1}, {"name": "אבוקדו הודי", "scientific": "Persea indica", "score": 3, "id": 294}, {"name": "אבוקדו קנרי", "scientific": "Persea canariensis", "score": 3, "id": 295}, {"name": "אבוקדו קרוליני", "scientific": "Persea borbonia", "score": 3, "id": 296}, {"name": "אגוז המלך", "scientific": "Juglans regia", "score": 3, "id": 2}, {"name": "אגוז לבן", "scientific": "Juglans cinerea", "score": 3, "id": 297}, {"name": "אגוז שחור", "scientific": "Juglans nigra", "score": 3, "id": 3}, {"name": "אגון גמיש", "scientific": "Agonis flexuosa", "score": 3, "id": 4}, {"name": "אגון גמיש ארגמני", "scientific": "Agonis flexuosa after dark", "score": 3, "id": 298}, {"name": "אגס אוסורי", "scientific": "Pyrus ussuriensis", "score": 3, "id": 299}, {"name": "אגס סורי", "scientific": "Pyrus syriaca", "score": 3, "id": 5}, {"name": "אגס ערבתי", "scientific": "Pyrus salicifolia", "score": 2, "id": 300}, {"name": "אגס קלרי", "scientific": "Pyrus calleryana", "score": 3, "id": 6}, {"name": "אגס שקדי", "scientific": "Pyrus amygdaliformis", "score": 3, "id": 301}, {"name": "אגס תרבותי", "scientific": "Pyrus communis", "score": 2, "id": 7}, {"name": "אדנסוניה מאוצבעת", "scientific": "Adansonia digitata", "score": 4, "id": 8}, {"name": "אדר אדום", "scientific": "Acer rubrum", "score": 3, "id": 303}, {"name": "אדר ברגר", "scientific": "Acer buergerianum", "score": 3, "id": 9}, {"name": "אדר גדול-עלים", "scientific": "Acer macrophyllum", "score": 3, "id": 304}, {"name": "אדר דולבני", "scientific": "Acer pseudo-platanus", "score": 4, "id": 305}, {"name": "אדר דמוי-דולב", "scientific": "Acer platanoides", "score": 4, "id": 306}, {"name": "אדר כפני", "scientific": "Acer palmatum", "score": 2, "id": 10}, {"name": "אדר מילני", "scientific": "Acer negundo", "score": 2, "id": 11}, {"name": "אדר מצוי", "scientific": "Acer campestre", "score": 3, "id": 12}, {"name": "אדר סורי", "scientific": "Acer obtusifolium", "score": 4, "id": 13}, {"name": "אוג אזמלני", "scientific": "Rhus lancea", "score": 3, "id": 14}, {"name": "אוג הבורסקאים", "scientific": " Rhus coriaria", "score": 3, "id": 519}, {"name": "אוג הדונג", "scientific": "Rhus succedanea", "score": 2, "id": 16}, {"name": "אוג הקופל", "scientific": "Rhus copallina", "score": 3, "id": 17}, {"name": "אוג תמים", "scientific": "Rhus integrifolia", "score": 4, "id": 307}, {"name": "אוגניה חד-פרחית", "scientific": "Eugenia uniflora", "score": 3, "id": 520}, {"name": "אוכנה מסורית", "scientific": "Ochna serrulata", "score": 4, "id": 308}, {"name": "אורן ארך-עלים", "scientific": "Pinus roxburghii", "score": 4, "id": 19}, {"name": "אורן החוף", "scientific": "Pinus pinaster", "score": 3, "id": 21}, {"name": "אורן הצנובר", "scientific": "Pinus pinea", "score": 4, "id": 20}, {"name": "אורן ירושלים", "scientific": "Pinus halepensis", "score": 3, "id": 22}, {"name": "אורן קנרי", "scientific": "Pinus canariensis", "score": 3, "id": 23}, {"name": "אורן קפריסאי", "scientific": "Pinus brutia", "score": 3, "id": 24}, {"name": "אזדרכת הודית", "scientific": "Melia azadirachta", "score": 2, "id": 309}, {"name": "אזדרכת מצויה", "scientific": "Melia azedarach", "score": 1, "id": 25}, {"name": "אילנתה בלוטית", "scientific": "Ailanthus altissima", "score": 1, "id": 26}, {"name": "אינגה אמיתית", "scientific": "Inga vera", "score": 3, "id": 27}, {"name": "איקליפטוס אגסי", "scientific": "Eucalyptus pyriformis", "score": 3, "id": 311}, {"name": "איקליפטוס אדום", "scientific": "Eucalyptus ficifolia", "score": 3, "id": 312}, {"name": "איקליפטוס אדום-זירים", "scientific": "Eucalyptus erythronema", "score": 3, "id": 313}, {"name": "איקליפטוס אדום-מצנפת", "scientific": "Eucalyptus erythrocorys", "score": 3, "id": 314}, {"name": "איקליפטוס אינקרסטה", "scientific": "Eucalyptus incrassata", "score": 3, "id": 315}, {"name": "איקליפטוס אלני", "scientific": "Eucalyptus cladocalyx", "score": 3, "id": 316}, {"name": "איקליפטוס ארבע-הכנפות", "scientific": "Eucalyptus tetraptera", "score": 3, "id": 317}, {"name": "איקליפטוס ארוך-מצנפת", "scientific": "Eucalyptus macrandra", "score": 3, "id": 318}, {"name": "איקליפטוס אשכולי", "scientific": "Eucalyptus botryoides", "score": 3, "id": 319}, {"name": "איקליפטוס בהיר-קליפה", "scientific": "Eucalyptus leucoxylon", "score": 3, "id": 28}, {"name": "איקליפטוס ברידגס", "scientific": "Eucalyptus bridgesiana", "score": 3, "id": 320}, {"name": "איקליפטוס גאן", "scientific": "Eucalyptus gunnii", "score": 3, "id": 321}, {"name": "איקליפטוס גביעני", "scientific": "Eucalyptus calycogona", "score": 3, "id": 322}, {"name": "איקליפטוס גדול", "scientific": "Eucalyptus grandis", "score": 3, "id": 323}, {"name": "איקליפטוס גדול-קרנים", "scientific": "Eucalyptus megacornuta", "score": 3, "id": 324}, {"name": "איקליפטוס גלילי", "scientific": "Eucalyptus hemiphloia", "score": 3, "id": 325}, {"name": "איקליפטוס גס", "scientific": "Eucalyptus rudis", "score": 3, "id": 326}, {"name": "איקליפטוס גרדנר", "scientific": "Eucalyptus gardneri", "score": 3, "id": 327}, {"name": "איקליפטוס דו-גוני", "scientific": "Eucalyptus bicolor", "score": 3, "id": 328}, {"name": "איקליפטוס דוליכורינכה", "scientific": "Eucalyptus dolichorhyncha", "score": 3, "id": 329}, {"name": "איקליפטוס הטבעות", "scientific": "Eucalyptus annulata", "score": 3, "id": 330}, {"name": "איקליפטוס הישימון", "scientific": "Eucalyptus eremophila", "score": 3, "id": 331}, {"name": "איקליפטוס המקור", "scientific": "Eucalyptus camadulensis", "score": 3, "id": 29}, {"name": "איקליפטוס הצאוורון", "scientific": "Eucalyptus torquata", "score": 3, "id": 30}, {"name": "איקליפטוס וודורד", "scientific": "Eucalyptus woodwardii", "score": 3, "id": 332}, {"name": "איקליפטוס ורוד-קליפה", "scientific": "Eucalyptus salmonophloia", "score": 3, "id": 333}, {"name": "איקליפטוס חיוני", "scientific": "Eucalyptus salubris", "score": 3, "id": 334}, {"name": "איקליפטוס חלק", "scientific": "Eucalyptus forrestiana", "score": 3, "id": 335}, {"name": "איקליפטוס חסון", "scientific": "Eucalyptus robusta", "score": 3, "id": 336}, {"name": "איקליפטוס חרוק", "scientific": "Eucalyptus platypus", "score": 3, "id": 337}, {"name": "איקליפטוס טורלי (קורימביה טורלי)", "scientific": "Eucalyptus torelliana", "score": 3, "id": 338}, {"name": "איקליפטוס יפה-עלים", "scientific": "Eucalyptus calophylla", "score": 3, "id": 339}, {"name": "איקליפטוס כדורי", "scientific": "Eucalyptus globulus", "score": 3, "id": 340}, {"name": "איקליפטוס כהה-קליפה", "scientific": "Eucalyptus sideroxylon", "score": 3, "id": 341}, {"name": "איקליפטוס כלאיים", "scientific": "Eucalyptus gomphocornuta", "score": 3, "id": 342}, {"name": "איקליפטוס כתום", "scientific": "Eucalyptus torwood", "score": 3, "id": 343}, {"name": "איקליפטוס לבן-ארגמן", "scientific": "Eucalyptus alba-purpurea", "score": 3, "id": 344}, {"name": "איקליפטוס לימוני", "scientific": "Eucalyptus citriodora", "score": 3, "id": 345}, {"name": "איקליפטוס למן", "scientific": "Eucalyptus lehmannii", "score": 3, "id": 346}, {"name": "איקליפטוס לנסדון", "scientific": "Eucalyptus lansdowneana", "score": 3, "id": 347}, {"name": "איקליפטוס מאובק", "scientific": "Eucalyptus pulverulenta", "score": 3, "id": 348}, {"name": "איקליפטוס מאפיר", "scientific": "Eucalyptus cinerea", "score": 3, "id": 349}, {"name": "איקליפטוס מוכתם", "scientific": "Eucalyptus maculata", "score": 3, "id": 350}, {"name": "איקליפטוס מיידן", "scientific": "Eucalyptus maideni", "score": 3, "id": 351}, {"name": "איקליפטוס מכבדי", "scientific": "Eucalyptus paniculata", "score": 3, "id": 352}, {"name": "איקליפטוס מכחיל", "scientific": "Eucalyptus caesia", "score": 3, "id": 353}, {"name": "איקליפטוס מכסיף", "scientific": "Eucalyptus campaspe", "score": 3, "id": 354}, {"name": "איקליפטוס מסמרי", "scientific": "Eucalyptus gomphocephala", "score": 3, "id": 31}, {"name": "איקליפטוס מעובה", "scientific": "Eucalyptus grossa", "score": 3, "id": 355}, {"name": "איקליפטוס מערבי", "scientific": "Eucalyptus occidentalis", "score": 3, "id": 356}, {"name": "איקליפטוס מצולע", "scientific": "Eucalyptus angulosa", "score": 3, "id": 357}, {"name": "איקליפטוס מקופל-פרי", "scientific": "Eucalyptus ptychocarpa", "score": 3, "id": 358}, {"name": "איקליפטוס מרובע", "scientific": "Eucalyptus tetragona", "score": 3, "id": 359}, {"name": "איקליפטוס מריתי", "scientific": "Eucalyptus spathulata", "score": 3, "id": 360}, {"name": "איקליפטוס נאה", "scientific": "Eucalyptus eximia", "score": 3, "id": 361}, {"name": "איקליפטוס נטוי", "scientific": "Eucalyptus nutans", "score": 3, "id": 362}, {"name": "איקליפטוס סטריקלנד", "scientific": "Eucalyptus stricklandii", "score": 3, "id": 363}, {"name": "איקליפטוס ססגוני", "scientific": "Eucalyptus diversicolor", "score": 3, "id": 364}, {"name": "איקליפטוס סרגנטי", "scientific": "Eucalyptus sargentii", "score": 3, "id": 365}, {"name": "איקליפטוס עדין", "scientific": "Eucalyptus gracilis", "score": 3, "id": 366}, {"name": "איקליפטוס עפיץ", "scientific": "Eucalyptus astringens", "score": 3, "id": 367}, {"name": "איקליפטוס ערבתי", "scientific": "Eucalyptus saligna", "score": 3, "id": 368}, {"name": "איקליפטוס פורה", "scientific": "Eucalyptus foecunda", "score": 3, "id": 369}, {"name": "איקליפטוס פורמני", "scientific": "Eucalyptus formanii", "score": 3, "id": 370}, {"name": "איקליפטוס פלוקטון", "scientific": "Eucalyptus flocktoniae", "score": 3, "id": 371}, {"name": "איקליפטוס פרין", "scientific": "Eucalyptus perriniana", "score": 3, "id": 372}, {"name": "איקליפטוס צפוף", "scientific": "Eucalyptus crebra", "score": 3, "id": 373}, {"name": "איקליפטוס צפצפתי", "scientific": "Eucalyptus populnea", "score": 3, "id": 374}, {"name": "איקליפטוס קינגסמיל", "scientific": "Eucalyptus kingsmillii", "score": 3, "id": 375}, {"name": "איקליפטוס קמחי", "scientific": "Eucalyptus pruinosa", "score": 3, "id": 376}, {"name": "איקליפטוס קרנוני", "scientific": "Eucalyptus cornuta", "score": 3, "id": 377}, {"name": "איקליפטוס רב-פרחים", "scientific": "Eucalyptus polyanthemos", "score": 3, "id": 378}, {"name": "איקליפטוס שונה-עלים", "scientific": "Eucalyptus diversifolia", "score": 3, "id": 379}, {"name": "איקליפטוס שחור-סות", "scientific": "Eucalyptus melanophloia", "score": 3, "id": 521}, {"name": "איקליפטוס שטייגר", "scientific": "Eucalyptus staigeriana", "score": 3, "id": 380}, {"name": "איקליפטוס שמוט", "scientific": "Eucalyptus tereticornis", "score": 3, "id": 381}, {"name": "איקליפטוס שרפי", "scientific": "Eucalyptus resinifera", "score": 3, "id": 382}, {"name": "איקלפטוס המקור (מכון)", "scientific": "Eucalyptus camaldulensis (מכון)", "score": 3, "id": 384}, {"name": "איקלפטוס המקור (עומר)", "scientific": "Eucalyptus camaldulensis 'עומר '", "score": 3, "id": 383}, {"name": "איקלפטוס הצוארון (צהב עומר)", "scientific": "Eucalyptus torquata צהב 'omer'", "score": 3, "id": 385}, {"name": "איקלפטוס קלילנד", "scientific": "Eucalyptus clelandii", "score": 3, "id": 386}, {"name": "אלביציה ורודה", "scientific": "Albizia julibrissin", "score": 3, "id": 32}, {"name": "אלביציה צהובה", "scientific": "Albizia lebbeck", "score": 3, "id": 33}, {"name": "אלה אטלנטית", "scientific": "Pistacia atlantica", "score": 5, "id": 34}, {"name": "אלה ארץ-ישראלית", "scientific": "Pistacia palaestina", "score": 4, "id": 35}, {"name": "אלה סינית", "scientific": "Pistacia chinensis", "score": 3, "id": 36}, {"name": "אלומגן חרמשי", "scientific": "Erythrina falcata", "score": 3, "id": 563}, {"name": "אלון אנגלי", "scientific": "Quercus robur", "score": 4, "id": 37}, {"name": "אלון ארך-עוקצים", "scientific": "Quercus pedunculiflora", "score": 4, "id": 38}, {"name": "אלון הגלעין", "scientific": "Quercus ilex", "score": 5, "id": 39}, {"name": "אלון הלבנון", "scientific": "Quercus libani", "score": 4, "id": 40}, {"name": "אלון השעם", "scientific": "Quercus suber", "score": 5, "id": 41}, {"name": "אלון התבור", "scientific": "Quercus ithaburensis", "score": 5, "id": 42}, {"name": "אלון התולע", "scientific": "Quercus boissieri", "score": 5, "id": 43}, {"name": "אלון מצוי", "scientific": "Quercus calliprino", "score": 5, "id": 44}, {"name": "אלון שסוע", "scientific": "Quercus cerris", "score": 4, "id": 45}, {"name": "אלמוגן אתיופי", "scientific": "Erythrina abyssinica", "score": 3, "id": 46}, {"name": "אלמוגן הודי", "scientific": "Erythrina indica", "score": 3, "id": 47}, {"name": "אלמוגן כרבולתי", "scientific": "Erythrina crista-galli", "score": 3, "id": 48}, {"name": "אלמוגן מעולה", "scientific": "Erythrina insignis", "score": 3, "id": 389}, {"name": "אלמוגן נשפוני", "scientific": "Erythrina vespertilio", "score": 3, "id": 390}, {"name": "אלמוגן צר-פרחים", "scientific": "Erythrina princeps", "score": 3, "id": 391}, {"name": "אלמוגן רחב-עלים", "scientific": "Erythrina corallodendrum", "score": 3, "id": 49}, {"name": "אלת הבוטנה", "scientific": "Pistacia vera", "score": 4, "id": 50}, {"name": "אלת מסטיק", "scientific": "Pistacia lentiscus", "score": 4, "id": 392}, {"name": "אנטרולוביום עגול-פרי", "scientific": "Enterolobium cyclocarpum", "score": 3, "id": 51}, {"name": "אפרסמון אמריקני", "scientific": "Diospyros virginiana", "score": 3, "id": 522}, {"name": "אפרסמון יפני (זנים שונים)", "scientific": "Diospyros kaki", "score": 2, "id": 523}, {"name": "אפרסק מצוי", "scientific": "Persica vulgaris", "score": 2, "id": 54}, {"name": "אקמנה סמיטי", "scientific": "Acmena smithii", "score": 2, "id": 524}, {"name": "אראוקריה רמה", "scientific": "Araucaria heterophylla", "score": 4, "id": 56}, {"name": "אראוקריית בידוויל", "scientific": "Araucaria bidwiillii", "score": 4, "id": 57}, {"name": "ארז אטלנטי", "scientific": "Cedrus atlantica", "score": 5, "id": 58}, {"name": "ארז הימלאי", "scientific": "Cedrus deodara", "score": 5, "id": 59}, {"name": "ארז הלבנון", "scientific": "Cedrus libani", "score": 5, "id": 60}, {"name": "ארכי-תמר אלכסנדרה", "scientific": "Archontophoenix alexandrae", "score": 3, "id": 525}, {"name": "אשחר ארץ-ישראלי", "scientific": "Rhamnus lycioides", "score": 3, "id": 393}, {"name": "אשחר רחב-עלים", "scientific": "Rhamnus alaternus", "score": 2, "id": 62}, {"name": "אשל החוף", "scientific": "Tamarix sp.", "score": 3, "id": 394}, {"name": "אשל הירדן", "scientific": "Tamarix jordanis", "score": 3, "id": 395}, {"name": "אשל הפרקים", "scientific": "Tamarix aphylla", "score": 3, "id": 63}, {"name": "אשל סיני", "scientific": "Tamarix chinensis", "score": 2, "id": 526}, {"name": "אשל צרפתי", "scientific": "Tamarix gallica", "score": 3, "id": 396}, {"name": "אשל קטן-פרחים", "scientific": "Tamarix parviflora", "score": 3, "id": 397}, {"name": "בוהיניה ארגמנית", "scientific": "Bauhinia purpurea", "score": 3, "id": 398}, {"name": "בוהיניה טורטיקטה", "scientific": "Bauhinia torticata", "score": 3, "id": 399}, {"name": "בוהיניה יחידת-מאבק", "scientific": "Bauhinia monandra", "score": 3, "id": 400}, {"name": "בוהיניה מגוונת", "scientific": "Bauhinia variegate", "score": 3, "id": 65}, {"name": "בוהיניית בלק", "scientific": "Bauhinia blakeana", "score": 3, "id": 401}, {"name": "בוהיניית קרון", "scientific": "Bauhinia carronii", "score": 3, "id": 402}, {"name": "בוטיה דרומית", "scientific": "Butia capitata", "score": 3, "id": 66}, {"name": "בולוסנתוס נאה", "scientific": "Bolusanthus specious", "score": 4, "id": 67}, {"name": "בומבק צייבה", "scientific": "Bombax ceiba", "score": 3, "id": 68}, {"name": "בוקיצה אמריקנית", "scientific": "Ulmus americana", "score": 2, "id": 69}, {"name": "בוקיצה נמוכה", "scientific": "Ulmus pumila", "score": 2, "id": 70}, {"name": "בוקיצה קטנת-עלים", "scientific": "Ulmus parvifolia", "score": 3, "id": 71}, {"name": "בוקיצה שעירה", "scientific": "Ulmus canescens", "score": 3, "id": 72}, {"name": "ביסמרקיה אצילה", "scientific": "Bismarckia nobilis", "score": 3, "id": 73}, {"name": "בירנית מפושקת", "scientific": "Pleno Flore divaricata Tabernaemontana", "score": 3, "id": 403}, {"name": "בן עוזרר דלקורי", "scientific": "Raphiolepis delacouri", "score": 2, "id": 404}, {"name": "בר-זית בינוני", "scientific": "Phillyrea latifolia", "score": 3, "id": 528}, {"name": "ברוש אריזוני", "scientific": "Cupressus arizonica", "score": 4, "id": 75}, {"name": "ברוש בייקר", "scientific": "Cupressus bakeri", "score": 4, "id": 405}, {"name": "ברוש בכות", "scientific": "Cupressus funebris", "score": 4, "id": 76}, {"name": "ברוש גדול-פירות", "scientific": "Cupressus macrocarpa", "score": 2, "id": 77}, {"name": "ברוש הדור", "scientific": "Cupressus elegans", "score": 4, "id": 406}, {"name": "ברוש מצוי", "scientific": "Cupressus sempervirens", "score": 4, "id": 78}, {"name": "ברוש פורטוגלי", "scientific": "Cupressus lusitanica", "score": 4, "id": 79}, {"name": "ברוש קירח", "scientific": "Cupressus glabra", "score": 4, "id": 527}, {"name": "ברוש קשמירי", "scientific": "Cupressus cashmeriana", "score": 4, "id": 81}, {"name": "ברזילי הדור", "scientific": "Metrosideros excelsa", "score": 3, "id": 82}, {"name": "ברכיכיטון אדרי", "scientific": "Brachychiton aserifolius", "score": 3, "id": 84}, {"name": "ברכיכיטון אוסטרלי", "scientific": "Brachychiton australis", "score": 3, "id": 85}, {"name": "ברכיכיטון בידוויל", "scientific": "Brachychiton bidwillii", "score": 3, "id": 86}, {"name": "ברכיכיטון גרגור", "scientific": "Brachychiton gregori", "score": 3, "id": 407}, {"name": "ברכיכיטון דו-גוני", "scientific": "Brachychiton discolor", "score": 3, "id": 83}, {"name": "ברכיכיטון הסלעים", "scientific": "Brachychiton rupestris", "score": 3, "id": 87}, {"name": "ברכיכיטון צפצפתי", "scientific": "Brachychiton populneum", "score": 3, "id": 88}, {"name": "ברסאיה (שפלרה) מקרינה", "scientific": "Brassaia actinophylla", "score": 2, "id": 529}, {"name": "גויאבה מצויה (זנים שונים)", "scientific": "Psidium guajava", "score": 2, "id": 89}, {"name": "גויאבה תותית (זנים שונים)", "scientific": "Psidium cattleianum", "score": 2, "id": 530}, {"name": "גופנן המדבר", "scientific": "Cordia myxa", "score": 3, "id": 544}, {"name": "גינקו דו-אונתי", "scientific": "Ginkgo biloba", "score": 4, "id": 91}, {"name": "גלדיצייה תלת-קוצית", "scientific": "Gleditsia triacanthos", "score": 3, "id": 92}, {"name": "גרווילאה חסונה", "scientific": "Grevillea robusta", "score": 3, "id": 93}, {"name": "דובדבן חמוץ", "scientific": "Cerasus vulgaris", "score": 3, "id": 408}, {"name": "דובדבן יפני", "scientific": "Cerasus serrulata", "score": 3, "id": 409}, {"name": "דובדבן מהלב", "scientific": "Cerasus mahaleb", "score": 3, "id": 410}, {"name": "דובדבן מתוק", "scientific": "Cerasus avium", "score": 3, "id": 411}, {"name": "דולב אדרי", "scientific": "Platanus acerifolia", "score": 3, "id": 95}, {"name": "דולב מזרחי", "scientific": "Platanus orientalis", "score": 4, "id": 96}, {"name": "דולב מכסיקני", "scientific": "Platanus mexicana", "score": 4, "id": 97}, {"name": "דולב קליפורני", "scientific": "Platanus racemoca", "score": 3, "id": 98}, {"name": "דום מצרי", "scientific": "Hyphaena thebaica", "score": 4, "id": 99}, {"name": "דומביאה וליך", "scientific": "Dombeya wallichii", "score": 4, "id": 412}, {"name": "דומביאה עגולת-עלים", "scientific": "Dombeya rotundifolia", "score": 3, "id": 100}, {"name": "דיספיס משולש", "scientific": "Dypsis decarii", "score": 1, "id": 518}, {"name": "דיפסיס לוטסנס", "scientific": "Dypsis (Chrysalidocarpus) lutescens", "score": 3, "id": 531}, {"name": "דק-פרי זקוף", "scientific": "Tecoma stans", "score": 2, "id": 103}, {"name": "דק-פרי ערמוני", "scientific": "Tecoma castanifolia", "score": 3, "id": 104}, {"name": "דקל זנב השועל", "scientific": "Wodyetia bifurcata", "score": 3, "id": 532}, {"name": "דקל רובליני", "scientific": "Phoenix roebelenii", "score": 4, "id": 413}, {"name": "דקל רווניאת הפלגים", "scientific": "Ravenea rivularis", "score": 2, "id": 533}, {"name": "דרקונית קנרית", "scientific": "Dracaena draco", "score": 4, "id": 106}, {"name": "הדר האשכולית ", "scientific": "Citrus paradisi", "score": 2, "id": 107}, {"name": "הדר האתרוג ", "scientific": "Citrus medica", "score": 2, "id": 108}, {"name": "הדר החושחש", "scientific": "Citrus aurantium", "score": 3, "id": 109}, {"name": "הדר הלימה", "scientific": "Citrus aurantiifolia", "score": 3, "id": 414}, {"name": "הדר הלימון", "scientific": "Citrus limon", "score": 3, "id": 110}, {"name": "הדר הלימונית", "scientific": "Citrus limetta", "score": 2, "id": 415}, {"name": "הדר המנדרין", "scientific": "Citrus reticulata", "score": 2, "id": 111}, {"name": "הדר הפומלו ", "scientific": "Citrus grandis", "score": 2, "id": 112}, {"name": "הדר הקלמנטינה", "scientific": "Citrus Clementine", "score": 2, "id": 514}, {"name": "הדר התפוז ", "scientific": "Citrus sinensis", "score": 2, "id": 113}, {"name": "הווניה מתוקה", "scientific": "Hovenia dulcis", "score": 3, "id": 114}, {"name": "הומלנתוס צפצפתי", "scientific": "Homalanthus populifolius", "score": 2, "id": 115}, {"name": "הטרומלס קטלבי", "scientific": "Heteromeles arbutifolia", "score": 3, "id": 116}, {"name": "היביסקוס חליף", "scientific": "Hibiscus mutabilis", "score": 3, "id": 416}, {"name": "היביסקוס טילייתי ('סתריה')", "scientific": "Hibiscus tiliaceus", "score": 3, "id": 417}, {"name": "היביסקוס רם", "scientific": "Hibiscus elatus", "score": 2, "id": 117}, {"name": "הינומית צהובה", "scientific": "Hymenosporum flavum", "score": 3, "id": 118}, {"name": "הרדוף הנחלים (על גזע)", "scientific": "Nerium oleander ", "score": 3, "id": 418}, {"name": "וושינגטוניה חוטית", "scientific": "Washingtonia filifera", "score": 3, "id": 119}, {"name": "וושינגטוניה חסונה", "scientific": "Washingtonia Robusta", "score": 3, "id": 120}, {"name": "זית אירופי", "scientific": "Olea europaea", "score": 4, "id": 121}, {"name": "זלקובה משורית", "scientific": "Zelkova serrate", "score": 4, "id": 122}, {"name": "זקום מצרי", "scientific": "Balanites aegyptiaca", "score": 4, "id": 123}, {"name": "זקיניה דוקרנית", "scientific": "pungens Jacquinia ", "score": 2, "id": 420}, {"name": "חאיה ניאסית", "scientific": "Khaya nyasica", "score": 3, "id": 535}, {"name": "חבוש מוארך", "scientific": "Cydonia oblonga", "score": 2, "id": 536}, {"name": "חוזרר החורש", "scientific": "Eriobolus trilobatus", "score": 4, "id": 537}, {"name": "חלבלוב דמוי-קוטינוס", "scientific": "Euphorbia cotinifolia", "score": 2, "id": 538}, {"name": "חלבלוב רותמי", "scientific": "Euphorbia tirucalli", "score": 2, "id": 128}, {"name": "חרוב מצוי", "scientific": "Ceratonia siliqua", "score": 4, "id": 129}, {"name": "טבבויה איפה", "scientific": "Tabebuia impetiginosa", "score": 4, "id": 130}, {"name": "טבבויה צהובה", "scientific": "Tabebuia chrysantha", "score": 3, "id": 131}, {"name": "טטרקליניס מפריק", "scientific": "Tetraclinis articulate", "score": 3, "id": 132}, {"name": "טיליה רחבת-עלים", "scientific": "Tilia platyphyllos", "score": 3, "id": 564}, {"name": "טכסודיון דו-טורי", "scientific": "Taxodium distichum", "score": 4, "id": 133}, {"name": "טקומן סיני", "scientific": "Radermachia sinica", "score": 3, "id": 134}, {"name": "טקסוס מעונב", "scientific": "Taxus baccata", "score": 4, "id": 421}, {"name": "טרכיקרפוס פורטון", "scientific": "Trachycarpus fortuni", "score": 4, "id": 135}, {"name": "טרמינליה הודית", "scientific": "Terminalia arjuna", "score": 3, "id": 136}, {"name": "יוקה דרומית", "scientific": "Yucca australis", "score": 4, "id": 422}, {"name": "יוקה פילית", "scientific": "Yucca elephantipes", "score": 4, "id": 423}, {"name": "יטרופית מחולקת", "scientific": "Jatropha multifida", "score": 2, "id": 425}, {"name": "יטרופית קצרת-אונות", "scientific": "Jatropha curcas", "score": 2, "id": 426}, {"name": "יטרופית תמימה", "scientific": "Jatropha integerrima", "score": 2, "id": 539}, {"name": "ינבוט המסקיטו", "scientific": "Prosopis juliflora", "score": 2, "id": 137}, {"name": "ינבוט לבן", "scientific": "Prosopis alba", "score": 3, "id": 138}, {"name": "יצהרון מכסיף", "scientific": "Elaeagnus angutifolia", "score": 3, "id": 139}, {"name": "כוריזיה בקבוקית", "scientific": "Chorisia insignis", "score": 3, "id": 141}, {"name": "כוריזיה הדורה", "scientific": "Chorisia speciosa", "score": 4, "id": 142}, {"name": "כיטלפת טשקנט", "scientific": "Chitalpa tashkentensis X", "score": 3, "id": 143}, {"name": "כילופסיס סרגלי", "scientific": "Chilopsis linearis", "score": 3, "id": 144}, {"name": "כליל החורש", "scientific": "Cercis siliquastrum", "score": 4, "id": 145}, {"name": "כליל קנדי", "scientific": "Cercis canadensis", "score": 3, "id": 146}, {"name": "כמרופס נמוך", "scientific": "Chamaerops humilis", "score": 5, "id": 147}, {"name": "כנף-זרע אדרי", "scientific": "pterospermum acerifolium", "score": 4, "id": 148}, {"name": "כסיית האבוב", "scientific": "Cassia fistula", "score": 3, "id": 149}, {"name": "כרבל לביד", "scientific": "Alectryon tomentosum", "score": 3, "id": 150}, {"name": "לבן- עלה שיחני גרין קלאוד", "scientific": "Leucophyllum frutescens - Green Cloud ", "score": 3, "id": 427}, {"name": "לבנה רפואי", "scientific": "Styrax officinalis", "score": 4, "id": 151}, {"name": "לגונריית פטרסון", "scientific": "Lagunaria patersonii", "score": 3, "id": 152}, {"name": "לגרסטרמיה הודית", "scientific": "Lagerstroemia indica", "score": 3, "id": 153}, {"name": "ליגוסטרום יפני", "scientific": "Ligustrum japonicum", "score": 3, "id": 154}, {"name": "ליוויסטונה סינית", "scientific": "Livistona chinensis", "score": 4, "id": 428}, {"name": "ליקווידמבר לבני", "scientific": "liquidambar styraciflua", "score": 3, "id": 156}, {"name": "מגלון אפריקני", "scientific": "Harpephyllum caffrum", "score": 3, "id": 157}, {"name": "מגנוליה גדולת-פרחים", "scientific": "Magnolia grandiflora", "score": 4, "id": 158}, {"name": "מורינגה מכונפת", "scientific": "Moringa oleifera", "score": 3, "id": 159}, {"name": "מורינגה רותמית", "scientific": "Moringa peregrine", "score": 3, "id": 160}, {"name": "מורן החורש", "scientific": "Viburnum tinus", "score": 1, "id": 540}, {"name": "מטאסקוויה סינית", "scientific": "Metasequoia glyptostroboides", "score": 4, "id": 541}, {"name": "מייש", "scientific": "Celtis sp.", "score": 4, "id": 429}, {"name": "מייש אפריקני", "scientific": "Celtis africana", "score": 3, "id": 167}, {"name": "מייש בונגה", "scientific": "Celtis bungeana", "score": 4, "id": 168}, {"name": "מייש דרומי", "scientific": "Celtis australis", "score": 4, "id": 169}, {"name": "מייש הכף", "scientific": "Celtis capensis", "score": 4, "id": 430}, {"name": "מייש חלק", "scientific": "Celtis laevigata", "score": 4, "id": 431}, {"name": "מייש מערבי", "scientific": "Celtis occidentalis", "score": 4, "id": 432}, {"name": "מייש מרובע", "scientific": "Celtis tetrandra", "score": 4, "id": 433}, {"name": "מייש מרושת", "scientific": "Celtis reticulata", "score": 4, "id": 434}, {"name": "מייש סיני", "scientific": "Celtis sinensis", "score": 3, "id": 170}, {"name": "מייש קווקזי", "scientific": "Celtis caucasica", "score": 4, "id": 435}, {"name": "מייש קוצני", "scientific": "Celtis spinosa", "score": 4, "id": 436}, {"name": "מילה אמריקנית", "scientific": "Fraxinus Americana", "score": 3, "id": 162}, {"name": "מילה ירוקת-עד", "scientific": "Fraxinus uhde", "score": 4, "id": 163}, {"name": "מילה לבנת-פרחים", "scientific": "Fraxinus ornus", "score": 3, "id": 164}, {"name": "מילה סורית", "scientific": "Fraxinus syriaca", "score": 4, "id": 165}, {"name": "מילה פנסילוונית", "scientific": "Fraxinus pennsylvanica", "score": 4, "id": 166}, {"name": "מירסיאנתוס ריחני", "scientific": "Myrcianthes fragrans", "score": 2, "id": 437}, {"name": "מכנף נאה", "scientific": "Tipuana tipu", "score": 3, "id": 171}, {"name": "מללויקה דקת-קליפה", "scientific": "Melaleuca halmaturorum", "score": 3, "id": 438}, {"name": "מללויקה ירוקת-פרחים", "scientific": "Melaleuca viridiflora", "score": 3, "id": 439}, {"name": "מללויקה לבנת-קליפה", "scientific": "Melaleuca styphelioides", "score": 3, "id": 440}, {"name": "מללויקה מאפירה", "scientific": "Melaleuca incana", "score": 3, "id": 441}, {"name": "מללויקה מחפה", "scientific": "Melaleuca bracteata", "score": 3, "id": 442}, {"name": "מללויקה מכסיפה", "scientific": "Melaleuca argentea", "score": 3, "id": 443}, {"name": "מללויקה מצומדת", "scientific": "Melaleuca armillaris", "score": 3, "id": 444}, {"name": "מללויקה מתקלפת", "scientific": "Melaleuca nesophylla", "score": 3, "id": 445}, {"name": "מללויקה קטנת-פרחים", "scientific": "Melaleuca parviflora", "score": 3, "id": 446}, {"name": "מללויקה רותמית", "scientific": "Melaleuca genistifolia", "score": 3, "id": 447}, {"name": "מללויקה רחבת-עלים", "scientific": "Melaleuca leucadendra", "score": 3, "id": 448}, {"name": "מללויקת כלאיים", "scientific": "Melaleuca 'hybrid'", "score": 3, "id": 449}, {"name": "מנגו הודי", "scientific": "Mangifera indica", "score": 3, "id": 173}, {"name": "מקדמיה רבועה", "scientific": "Macadamia tetraphylla", "score": 3, "id": 174}, {"name": "מקלורה זהובה", "scientific": "Maclura pomifera", "score": 3, "id": 450}, {"name": "מרואה עבת-עלים", "scientific": "Maerua crassifolia", "score": 4, "id": 175}, {"name": "מרקמיה צהובה", "scientific": "Markhamia lutea", "score": 2, "id": 176}, {"name": "מתחלית פעמונית", "scientific": "Spathodea campanulata", "score": 3, "id": 177}, {"name": "סבל פלמטו", "scientific": "Sabal palmetto", "score": 3, "id": 178}, {"name": "סהרון קשה עלים", "scientific": "laurifolia Cocculus", "score": 3, "id": 451}, {"name": "סולנום גדול", "scientific": "Solanum macranthum", "score": 2, "id": 179}, {"name": "סופורה אמריקנית", "scientific": "Sophora secundiflora", "score": 3, "id": 180}, {"name": "סופורה יפנית", "scientific": "Sophora japonica", "score": 4, "id": 181}, {"name": "סטיפנולוביום יפני", "scientific": "Styphnolobium japonicum", "score": 4, "id": 452}, {"name": "סטנוקרפוס הגלגלים", "scientific": "Stenocarpus sinuatus", "score": 2, "id": 542}, {"name": "סיגלון עלי-מימוסה", "scientific": "Jacaranda mimosifolia", "score": 4, "id": 182}, {"name": "סיזיגיון אוסטרלי", "scientific": "Syzygium austral", "score": 3, "id": 183}, {"name": "סיזיגיון ימבולן", "scientific": "Syzygium jambolan", "score": 3, "id": 184}, {"name": "סיזיגיון מכבדי", "scientific": "Syzygium paniculatum", "score": 3, "id": 185}, {"name": "סייגרוס רומנזוף", "scientific": "Syagrus romanzoffianum", "score": 2, "id": 186}, {"name": "סיסם הודי", "scientific": "Dalbergia sissoo", "score": 4, "id": 187}, {"name": "ספיון השעוה", "scientific": "Sapium sebiferum", "score": 4, "id": 188}, {"name": "סקויה נאה", "scientific": "Sequoia sempervirens", "score": 4, "id": 543}, {"name": "עוזרר אדום", "scientific": "Crataegus azarolus", "score": 4, "id": 190}, {"name": "עוזרר קוצני", "scientific": "Crataegus aronia", "score": 4, "id": 191}, {"name": "ער אציל", "scientific": "Laurus nobilis", "score": 4, "id": 192}, {"name": "ער קנרי", "scientific": "Laurus canariensis", "score": 4, "id": 453}, {"name": "ערבה מחודדת", "scientific": "Salix acmophylla", "score": 3, "id": 193}, {"name": "ערבה מצודנה", "scientific": "Salix matsudana", "score": 3, "id": 454}, {"name": "ערבה צריפית ", "scientific": "Salix humboldtiana", "score": 2, "id": 194}, {"name": "ערבה רותמית", "scientific": "Salix viminalis", "score": 3, "id": 455}, {"name": "ערבה שבירה", "scientific": "Salix fragilis", "score": 3, "id": 456}, {"name": "ערבת בבל", "scientific": "Salix babylonica", "score": 3, "id": 195}, {"name": "ערמונית הסוסים", "scientific": "Aesculus hippocastanum", "score": 4, "id": 457}, {"name": "ערער אדום", "scientific": "Juniperus phoenicea", "score": 4, "id": 459}, {"name": "ערער ארזני", "scientific": "Juniperus oxycedrus", "score": 4, "id": 460}, {"name": "ערער ברמודי", "scientific": "Juniperus bermudiana", "score": 4, "id": 461}, {"name": "ערער הגלעין", "scientific": "Juniperus drupacea", "score": 4, "id": 462}, {"name": "ערער המצוקים", "scientific": "Juniperus scopulorum", "score": 4, "id": 463}, {"name": "ערער וירגיני", "scientific": "Juniperus virginiana", "score": 4, "id": 464}, {"name": "ערער חד-זרעי", "scientific": "Juniperus monosperma", "score": 4, "id": 465}, {"name": "ערער לוקייני", "scientific": "Juniperus lucayana", "score": 4, "id": 466}, {"name": "ערער מצוי", "scientific": "Juniperus communis", "score": 4, "id": 467}, {"name": "ערער סיני", "scientific": "Juniperus chinensis", "score": 3, "id": 468}, {"name": "ערער ספרדי", "scientific": "Juniperus thurifera", "score": 4, "id": 469}, {"name": "ערער רד-פנסיל", "scientific": "Juniperus 'Red Pencil'", "score": 4, "id": 458}, {"name": "ערער רם", "scientific": "Juniperus excels", "score": 4, "id": 196}, {"name": "פארון הכף", "scientific": "Calodendrum capensis", "score": 4, "id": 198}, {"name": "פודוקרפוס גדול-עלים", "scientific": "Podocarpus macrophyllus", "score": 4, "id": 199}, {"name": "פודוקרפוס מגלי", "scientific": "Podocarpus falcatus", "score": 4, "id": 200}, {"name": "פולובניית פרוטון", "scientific": "Paulownia fortune", "score": 2, "id": 545}, {"name": "פונגמיה מנוצה", "scientific": "Pongamia pinnata", "score": 3, "id": 202}, {"name": "פטרוקריה מיילנית", "scientific": "Pterocarya fraxinifolia", "score": 3, "id": 203}, {"name": "פיג'ואה תרבותית", "scientific": "Feijoa sellowiana", "score": 3, "id": 204}, {"name": "פיטולקה דו-ביתית", "scientific": "Phytolacca dioica", "score": 4, "id": 205}, {"name": "פיטוספורום גלוני", "scientific": "Pittosporum undulatum", "score": 4, "id": 206}, {"name": "פיטוספורום יפני", "scientific": "Pittosporum tobira", "score": 4, "id": 546}, {"name": "פיקוס אוזני", "scientific": "Ficus auriculata", "score": 3, "id": 208}, {"name": "פיקוס בנגלי", "scientific": "Ficus bengalensis", "score": 4, "id": 209}, {"name": "פיקוס בנימינה", "scientific": "Ficus benjamina", "score": 3, "id": 210}, {"name": "פיקוס בת-שקמה", "scientific": "Ficus pseudo-sycomorus", "score": 4, "id": 470}, {"name": "פיקוס הגומי", "scientific": "Ficus elastic", "score": 3, "id": 211}, {"name": "פיקוס השדרות", "scientific": "Ficus microcarpa", "score": 4, "id": 212}, {"name": "פיקוס השקמה ", "scientific": "Ficus sycomorus", "score": 4, "id": 213}, {"name": "פיקוס התאנה", "scientific": "Ficus carica", "score": 3, "id": 214}, {"name": "פיקוס חלוד", "scientific": "Ficus rubiginosa", "score": 3, "id": 215}, {"name": "פיקוס כינורי", "scientific": "Ficus lyrata", "score": 3, "id": 216}, {"name": "פיקוס מעוקם", "scientific": "Ficus oblique", "score": 4, "id": 217}, {"name": "פיקוס צר-עלים", "scientific": "Ficus binnendijkii", "score": 3, "id": 218}, {"name": "פיקוס קדוש", "scientific": "Ficus religiosa", "score": 3, "id": 219}, {"name": "פירמיאנה פשוטה", "scientific": "Firmiana simplex", "score": 4, "id": 547}, {"name": "פלומריה ריחנית", "scientific": "Plumeria rubra", "score": 3, "id": 221}, {"name": "פלפלון בכות", "scientific": "Schinus molle", "score": 3, "id": 222}, {"name": "פלפלון דמוי-אלה", "scientific": "Schinus terebinthifolius", "score": 2, "id": 223}, {"name": "פנסית דו-נוצתית", "scientific": "Koelreuteria bipinnata", "score": 3, "id": 224}, {"name": "פנסית מכבדית", "scientific": "Koelreuteria paniculata", "score": 3, "id": 225}, {"name": "פפיה מצויה", "scientific": "Carica papaya", "score": 2, "id": 548}, {"name": "פרקינסוניה שיכנית", "scientific": "Parkinsonia aculeata", "score": 0, "id": 227}, {"name": "צאלון נאה", "scientific": "Delonix regia", "score": 4, "id": 228}, {"name": "צחר כחלחל", "scientific": "Leucaena leucocephala", "score": 0, "id": 229}, {"name": "צייבה מחומשת", "scientific": "Ceiba Pantandra", "score": 4, "id": 230}, {"name": "צינית מקרינה", "scientific": "Ilex cornuta", "score": 3, "id": 549}, {"name": "צינית קרולינית וויל פלמינג", "scientific": "Ilex vomitoria", "score": 2, "id": 471}, {"name": "צינית קרולינית פריד אוף יוסטון", "scientific": "Ilex vomitoria Pride of Houston", "score": 2, "id": 472}, {"name": "ציקס מופשל", "scientific": "Cycas revoluta ", "score": 5, "id": 473}, {"name": "צפצפה מכסיפה", "scientific": "Populus alba", "score": 3, "id": 232}, {"name": "צפצפה מקוצעת", "scientific": "Populus angulate", "score": 3, "id": 233}, {"name": "צפצפה שחורה", "scientific": "Populus nigra", "score": 3, "id": 234}, {"name": "צפצפת הפרת", "scientific": "Populus euphratica", "score": 4, "id": 235}, {"name": "קוטינוס מזרחי", "scientific": "Cotinus coggygria", "score": 3, "id": 550}, {"name": "קולווילאה אשכולית", "scientific": "Colvillea racemosa", "score": 3, "id": 237}, {"name": "קוסוניה משובלת", "scientific": "Cussonia spicata", "score": 3, "id": 238}, {"name": "קופניון אנקרדי", "scientific": "Cupaniopsis anacardioides", "score": 3, "id": 551}, {"name": "קזוארינה אשונה", "scientific": "Allocasuarina verticillata", "score": 3, "id": 388}, {"name": "קזוארינה סיבית", "scientific": "inophloia Casuarina ", "score": 3, "id": 474}, {"name": "קזוארינה שבטבטית", "scientific": "Casuarina equisetifolia", "score": 3, "id": 244}, {"name": "קטלב מצוי", "scientific": "Arbutus andrachne", "score": 5, "id": 245}, {"name": "קטלב משונן", "scientific": "Arbutus unedo", "score": 4, "id": 246}, {"name": "קטלפה ביגנונית", "scientific": "Catalpa bignonioides", "score": 3, "id": 247}, {"name": "קיגליה מנוצה", "scientific": "Kigelia pinnata", "score": 4, "id": 552}, {"name": "קינמון קמפורי", "scientific": "Cinnamomum camphora", "score": 4, "id": 249}, {"name": "קליאנדרה אדומת-פרי", "scientific": "Calliandra haematocarpa", "score": 3, "id": 478}, {"name": "קליאנדרה ורודת-קרקפות", "scientific": "Calliandra heamatocephala", "score": 3, "id": 475}, {"name": "קליאנדרה לבנת-קרקפת (ALBA)", "scientific": "Calliandra heamatocephala alba", "score": 3, "id": 477}, {"name": "קליאנדרה קליפורנית", "scientific": "Calliandra californica", "score": 3, "id": 476}, {"name": "קליאנדרת שולץ", "scientific": "Calliandra schultzei", "score": 3, "id": 479}, {"name": "קליטריס כחלחל", "scientific": "Callitris glaucophylla", "score": 3, "id": 250}, {"name": "קליטריס מיובל", "scientific": "Callitris verrucosa", "score": 3, "id": 480}, {"name": "קליסטמון אדום", "scientific": "Callistemon phoeniceus", "score": 3, "id": 553}, {"name": "קליסטמון הנצרים", "scientific": "Callistemon viminalis", "score": 3, "id": 252}, {"name": "קליסטמון תרוג", "scientific": "Callistemon citrinus", "score": 3, "id": 254}, {"name": "קנטיה פורסטר", "scientific": "Howea (Kentia) forsteriana", "score": 3, "id": 554}, {"name": "קסאלפיניה יפהפייה ", "scientific": "Caesalpinia pulcherrima", "score": 3, "id": 481}, {"name": "קסילוסמת זלצמן", "scientific": "Xylosma salzmannii", "score": 4, "id": 256}, {"name": "קריוטה נאה", "scientific": "Caryota mitis", "score": 3, "id": 257}, {"name": "קריית הפקן", "scientific": "Carya illinoinensis", "score": 3, "id": 258}, {"name": "קתרוסית מרובעת", "scientific": "Citharexylum spinosum", "score": 3, "id": 259}, {"name": "רואיסטוניה רג'ה- דקל המלך (דקל קוקוס)", "scientific": "Roestonia regia", "score": 2, "id": 516}, {"name": "רוביניה בת-שיטה", "scientific": "Robinia pseudo-acacia", "score": 2, "id": 260}, {"name": "רוולנה מדגסקרית", "scientific": "Ravenala madagascariensis", "score": 3, "id": 555}, {"name": "רומם מלכותי", "scientific": "Roysotnea regia", "score": 3, "id": 263}, {"name": "רימון מצוי", "scientific": "Punica granatum", "score": 3, "id": 264}, {"name": "רפיס רם", "scientific": "Rhapis excalsa", "score": 2, "id": 265}, {"name": "שדר משתלשל", "scientific": "Betula pendula", "score": 3, "id": 266}, {"name": "שוטיה רחבת-עלים", "scientific": "Schotia latifolia", "score": 3, "id": 267}, {"name": "שזיף דובדבני 'אדום'/'שחור'", "scientific": "Prunus cerasifera 'Atropurpurea'/'Nigra'", "score": 3, "id": 556}, {"name": "שזיף מינים שונים", "scientific": "Prunus spp", "score": 2, "id": 557}, {"name": "שזיף פעמוני", "scientific": "Prunus campanulata", "score": 3, "id": 270}, {"name": "שיזף מצוי", "scientific": "Zizphus spina-christi", "score": 4, "id": 271}, {"name": "שיטה ארכת-עלים / שיטה עלי-ערבה", "scientific": "Acacia longifolia", "score": 2, "id": 482}, {"name": "שיטה גלדנית", "scientific": "Acacia coriacea", "score": 2, "id": 484}, {"name": "שיטה דוקרנית", "scientific": "Acacia paradoxa", "score": 0, "id": 558}, {"name": "שיטה דורית", "scientific": "Acacia verticillata", "score": 2, "id": 485}, {"name": "שיטה דמוית-פלפלון", "scientific": "Acacia schinoides", "score": 2, "id": 486}, {"name": "שיטה הקיאית", "scientific": "Acacia hakeoides", "score": 2, "id": 487}, {"name": "שיטה הרדופית", "scientific": "Acacia neriifolia", "score": 2, "id": 488}, {"name": "שיטה חד-קרנית", "scientific": "Acacia horrida", "score": 2, "id": 489}, {"name": "שיטה כחלחלה", "scientific": "Acacia saligna", "score": 0, "id": 272}, {"name": "שיטה לשונית", "scientific": "Acacia ligulata", "score": 2, "id": 490}, {"name": "שיטה מחוספסת-גביע", "scientific": "Acacia lasiocalyx", "score": 2, "id": 491}, {"name": "שיטה מחורצת", "scientific": "Acacia aulacocarpa", "score": 2, "id": 492}, {"name": "שיטה מלבינה", "scientific": "Faidherbia albida", "score": 4, "id": 273}, {"name": "שיטה משתלשלת", "scientific": "Acacia pendula", "score": 3, "id": 274}, {"name": "שיטה נאה", "scientific": "Acacia decora", "score": 2, "id": 493}, {"name": "שיטה נודעת", "scientific": "Acacia notabilis", "score": 2, "id": 494}, {"name": "שיטה נפוצה", "scientific": "Acacia congnata", "score": 2, "id": 495}, {"name": "שיטה סוככנית", "scientific": "Acacia tortilis", "score": 4, "id": 511}, {"name": "שיטה סיבית", "scientific": "Acacia fimbriata", "score": 2, "id": 496}, {"name": "שיטה סלילנית", "scientific": "Acacia raddiana", "score": 4, "id": 276}, {"name": "שיטה סנגלית", "scientific": "Acacia senegal", "score": 2, "id": 497}, {"name": "שיטה עגולת עלים", "scientific": "Acacia cyclops", "score": 0, "id": 559}, {"name": "שיטה צרת-עלים", "scientific": "Acacia stenophylla", "score": 2, "id": 498}, {"name": "שיטה קוון", "scientific": "Acacia caven", "score": 2, "id": 499}, {"name": "שיטה קטכו", "scientific": "Acacia catechu", "score": 2, "id": 500}, {"name": "שיטה קטנת-עלים", "scientific": "Acacia pravissima", "score": 2, "id": 501}, {"name": "שיטה קטנת-שינון", "scientific": "Acacia denticulosa", "score": 2, "id": 502}, {"name": "שיטה רבת-פרחים", "scientific": "Acacia pycnantha", "score": 2, "id": 503}, {"name": "שיטה ריסנית", "scientific": "Acacia salicina", "score": 2, "id": 504}, {"name": "שיטה רכה", "scientific": "Acacia decurrens", "score": 2, "id": 505}, {"name": "שיטה שחורת-עצה", "scientific": "Acacia melanoxylon", "score": 2, "id": 506}, {"name": "שיטת ביילי", "scientific": "Acacia baileyana", "score": 2, "id": 507}, {"name": "שיטת הוויט", "scientific": "Acacia howittii", "score": 2, "id": 508}, {"name": "שיטת המולגה", "scientific": "Acacia aneura", "score": 2, "id": 509}, {"name": "שיטת המקור", "scientific": "Acacia rostellifera", "score": 2, "id": 510}, {"name": "שיטת המשוכות", "scientific": "Vachellia farnesiana", "score": 1, "id": 277}, {"name": "שיטת הנגב", "scientific": "Vachellia gerrardii", "score": 5, "id": 278}, {"name": "שיטת ויקטוריה", "scientific": "Acacia", "score": 2, "id": 512}, {"name": "שיטת עלי-ערבה", "scientific": "Acacia salicina", "score": 0, "id": 560}, {"name": "שלטית אפריקנית", "scientific": "Peltophorum africanum", "score": 3, "id": 280}, {"name": "שלטית מקומטת", "scientific": "Peltophorum dubium", "score": 3, "id": 281}, {"name": "שסע פרהיבי", "scientific": "Schizolobium parahybum", "score": 3, "id": 561}, {"name": "שסק יפני", "scientific": "Eriobotrya japonica", "score": 3, "id": 283}, {"name": "שקד מצוי", "scientific": "Amygdalus communis", "score": 3, "id": 284}, {"name": "תויה מינים שונים", "scientific": "Thuja spp", "score": 3, "id": 562}, {"name": "תות לבן", "scientific": "Morus alba", "score": 3, "id": 286}, {"name": "תות שחור", "scientific": "Morus nigra", "score": 4, "id": 287}, {"name": "תמר מצוי", "scientific": "Phoenix dactylifera", "score": 2, "id": 517}, {"name": "תמר נטוי", "scientific": "Phoenix reclinata", "score": 3, "id": 289}, {"name": "תמר קנרי", "scientific": "Phoenix canariensis", "score": 2, "id": 290}, {"name": "תמרינד הודי", "scientific": "Tamarindus indica", "score": 4, "id": 291}, {"name": "תספזיה צפצפתית", "scientific": "Thespesia populnea", "score": 3, "id": 292}];
+const TREE_SPECIES = [{"name": "Unknown", "scientific": "Unknown", "score": 0, "id": 513}, {"name": "אבוקדו אמריקני", "scientific": "Persea americana", "score": 3, "id": 1}, {"name": "אבוקדו הודי", "scientific": "Persea indica", "score": 3, "id": 294}, {"name": "אבוקדו קנרי", "scientific": "Persea canariensis", "score": 3, "id": 295}, {"name": "אבוקדו קרוליני", "scientific": "Persea borbonia", "score": 3, "id": 296}, {"name": "אגוז המלך", "scientific": "Juglans regia", "score": 3, "id": 2}, {"name": "אגוז לבן", "scientific": "Juglans cinerea", "score": 3, "id": 297}, {"name": "אגוז שחור", "scientific": "Juglans nigra", "score": 3, "id": 3}, {"name": "אגון גמיש", "scientific": "Agonis flexuosa", "score": 3, "id": 4}, {"name": "אגון גמיש ארגמני", "scientific": "Agonis flexuosa after dark", "score": 3, "id": 298}, {"name": "אגס אוסורי", "scientific": "Pyrus ussuriensis", "score": 3, "id": 299}, {"name": "אגס סורי", "scientific": "Pyrus syriaca", "score": 3, "id": 5}, {"name": "אגס ערבתי", "scientific": "Pyrus salicifolia", "score": 2, "id": 300}, {"name": "אגס קלרי", "scientific": "Pyrus calleryana", "score": 3, "id": 6}, {"name": "אגס שקדי", "scientific": "Pyrus amygdaliformis", "score": 3, "id": 301}, {"name": "אגס תרבותי", "scientific": "Pyrus communis", "score": 2, "id": 7}, {"name": "אדנסוניה מאוצבעת", "scientific": "Adansonia digitata", "score": 4, "id": 8}, {"name": "אדר אדום", "scientific": "Acer rubrum", "score": 3, "id": 303}, {"name": "אדר ברגר", "scientific": "Acer buergerianum", "score": 3, "id": 9}, {"name": "אדר גדול-עלים", "scientific": "Acer macrophyllum", "score": 3, "id": 304}, {"name": "אדר דולבני", "scientific": "Acer pseudo-platanus", "score": 4, "id": 305}, {"name": "אדר דמוי-דולב", "scientific": "Acer platanoides", "score": 4, "id": 306}, {"name": "אדר כפני", "scientific": "Acer palmatum", "score": 2, "id": 10}, {"name": "אדר מילני", "scientific": "Acer negundo", "score": 2, "id": 11}, {"name": "אדר מצוי", "scientific": "Acer campestre", "score": 3, "id": 12}, {"name": "אדר סורי", "scientific": "Acer obtusifolium", "score": 4, "id": 13}, {"name": "אוג אזמלני", "scientific": "Rhus lancea", "score": 3, "id": 14}, {"name": "אוג הבורסקאים", "scientific": " Rhus coriaria", "score": 3, "id": 519}, {"name": "אוג הדונג", "scientific": "Rhus succedanea", "score": 2, "id": 16}, {"name": "אוג הקופל", "scientific": "Rhus copallina", "score": 3, "id": 17}, {"name": "אוג תמים", "scientific": "Rhus integrifolia", "score": 4, "id": 307}, {"name": "אוגניה חד-פרחית", "scientific": "Eugenia uniflora", "score": 3, "id": 520}, {"name": "אוכנה מסורית", "scientific": "Ochna serrulata", "score": 4, "id": 308}, {"name": "אורן ארך-עלים", "scientific": "Pinus roxburghii", "score": 4, "id": 19}, {"name": "אורן החוף", "scientific": "Pinus pinaster", "score": 3, "id": 21}, {"name": "אורן הצנובר", "scientific": "Pinus pinea", "score": 4, "id": 20}, {"name": "אורן ירושלים", "scientific": "Pinus halepensis", "score": 3, "id": 22}, {"name": "אורן קנרי", "scientific": "Pinus canariensis", "score": 3, "id": 23}, {"name": "אורן קפריסאי", "scientific": "Pinus brutia", "score": 3, "id": 24}, {"name": "אזדרכת הודית", "scientific": "Melia azadirachta", "score": 2, "id": 309}, {"name": "אזדרכת מצויה", "scientific": "Melia azedarach", "score": 1, "id": 25}, {"name": "אילנתה בלוטית", "scientific": "Ailanthus altissima", "score": 1, "id": 26}, {"name": "אינגה אמיתית", "scientific": "Inga vera", "score": 3, "id": 27}, {"name": "איקליפטוס אגסי", "scientific": "Eucalyptus pyriformis", "score": 3, "id": 311}, {"name": "איקליפטוס אדום", "scientific": "Eucalyptus ficifolia", "score": 3, "id": 312}, {"name": "איקליפטוס אדום-זירים", "scientific": "Eucalyptus erythronema", "score": 3, "id": 313}, {"name": "איקליפטוס אדום-מצנפת", "scientific": "Eucalyptus erythrocorys", "score": 3, "id": 314}, {"name": "איקליפטוס אינקרסטה", "scientific": "Eucalyptus incrassata", "score": 3, "id": 315}, {"name": "איקליפטוס אלני", "scientific": "Eucalyptus cladocalyx", "score": 3, "id": 316}, {"name": "איקליפטוס ארבע-הכנפות", "scientific": "Eucalyptus tetraptera", "score": 3, "id": 317}, {"name": "איקליפטוס ארוך-מצנפת", "scientific": "Eucalyptus macrandra", "score": 3, "id": 318}, {"name": "איקליפטוס אשכולי", "scientific": "Eucalyptus botryoides", "score": 3, "id": 319}, {"name": "איקליפטוס בהיר-קליפה", "scientific": "Eucalyptus leucoxylon", "score": 3, "id": 28}, {"name": "איקליפטוס ברידגס", "scientific": "Eucalyptus bridgesiana", "score": 3, "id": 320}, {"name": "איקליפטוס גאן", "scientific": "Eucalyptus gunnii", "score": 3, "id": 321}, {"name": "איקליפטוס גביעני", "scientific": "Eucalyptus calycogona", "score": 3, "id": 322}, {"name": "איקליפטוס גדול", "scientific": "Eucalyptus grandis", "score": 3, "id": 323}, {"name": "איקליפטוס גדול-קרנים", "scientific": "Eucalyptus megacornuta", "score": 3, "id": 324}, {"name": "איקליפטוס גלילי", "scientific": "Eucalyptus hemiphloia", "score": 3, "id": 325}, {"name": "איקליפטוס גס", "scientific": "Eucalyptus rudis", "score": 3, "id": 326}, {"name": "איקליפטוס גרדנר", "scientific": "Eucalyptus gardneri", "score": 3, "id": 327}, {"name": "איקליפטוס דו-גוני", "scientific": "Eucalyptus bicolor", "score": 3, "id": 328}, {"name": "איקליפטוס דוליכורינכה", "scientific": "Eucalyptus dolichorhyncha", "score": 3, "id": 329}, {"name": "איקליפטוס הטבעות", "scientific": "Eucalyptus annulata", "score": 3, "id": 330}, {"name": "איקליפטוס הישימון", "scientific": "Eucalyptus eremophila", "score": 3, "id": 331}, {"name": "איקליפטוס המקור", "scientific": "Eucalyptus camadulensis", "score": 3, "id": 29}, {"name": "איקליפטוס הצאוורון", "scientific": "Eucalyptus torquata", "score": 3, "id": 30}, {"name": "איקליפטוס וודורד", "scientific": "Eucalyptus woodwardii", "score": 3, "id": 332}, {"name": "איקליפטוס ורוד-קליפה", "scientific": "Eucalyptus salmonophloia", "score": 3, "id": 333}, {"name": "איקליפטוס חיוני", "scientific": "Eucalyptus salubris", "score": 3, "id": 334}, {"name": "איקליפטוס חלק", "scientific": "Eucalyptus forrestiana", "score": 3, "id": 335}, {"name": "איקליפטוס חסון", "scientific": "Eucalyptus robusta", "score": 3, "id": 336}, {"name": "איקליפטוס חרוק", "scientific": "Eucalyptus platypus", "score": 3, "id": 337}, {"name": "איקליפטוס טורלי (קורימביה טורלי)", "scientific": "Eucalyptus torelliana", "score": 3, "id": 338}, {"name": "איקליפטוס יפה-עלים", "scientific": "Eucalyptus calophylla", "score": 3, "id": 339}, {"name": "איקליפטוס כדורי", "scientific": "Eucalyptus globulus", "score": 3, "id": 340}, {"name": "איקליפטוס כהה-קליפה", "scientific": "Eucalyptus sideroxylon", "score": 3, "id": 341}, {"name": "איקליפטוס כלאיים", "scientific": "Eucalyptus gomphocornuta", "score": 3, "id": 342}, {"name": "איקליפטוס כתום", "scientific": "Eucalyptus torwood", "score": 3, "id": 343}, {"name": "איקליפטוס לבן-ארגמן", "scientific": "Eucalyptus alba-purpurea", "score": 3, "id": 344}, {"name": "איקליפטוס לימוני", "scientific": "Eucalyptus citriodora", "score": 3, "id": 345}, {"name": "איקליפטוס למן", "scientific": "Eucalyptus lehmannii", "score": 3, "id": 346}, {"name": "איקליפטוס לנסדון", "scientific": "Eucalyptus lansdowneana", "score": 3, "id": 347}, {"name": "איקליפטוס מאובק", "scientific": "Eucalyptus pulverulenta", "score": 3, "id": 348}, {"name": "איקליפטוס מאפיר", "scientific": "Eucalyptus cinerea", "score": 3, "id": 349}, {"name": "איקליפטוס מוכתם", "scientific": "Eucalyptus maculata", "score": 3, "id": 350}, {"name": "איקליפטוס מיידן", "scientific": "Eucalyptus maideni", "score": 3, "id": 351}, {"name": "איקליפטוס מכבדי", "scientific": "Eucalyptus paniculata", "score": 3, "id": 352}, {"name": "איקליפטוס מכחיל", "scientific": "Eucalyptus caesia", "score": 3, "id": 353}, {"name": "איקליפטוס מכסיף", "scientific": "Eucalyptus campaspe", "score": 3, "id": 354}, {"name": "איקליפטוס מסמרי", "scientific": "Eucalyptus gomphocephala", "score": 3, "id": 31}, {"name": "איקליפטוס מעובה", "scientific": "Eucalyptus grossa", "score": 3, "id": 355}, {"name": "איקליפטוס מערבי", "scientific": "Eucalyptus occidentalis", "score": 3, "id": 356}, {"name": "איקליפטוס מצולע", "scientific": "Eucalyptus angulosa", "score": 3, "id": 357}, {"name": "איקליפטוס מקופל-פרי", "scientific": "Eucalyptus ptychocarpa", "score": 3, "id": 358}, {"name": "איקליפטוס מרובע", "scientific": "Eucalyptus tetragona", "score": 3, "id": 359}, {"name": "איקליפטוס מריתי", "scientific": "Eucalyptus spathulata", "score": 3, "id": 360}, {"name": "איקליפטוס נאה", "scientific": "Eucalyptus eximia", "score": 3, "id": 361}, {"name": "איקליפטוס נטוי", "scientific": "Eucalyptus nutans", "score": 3, "id": 362}, {"name": "איקליפטוס סטריקלנד", "scientific": "Eucalyptus stricklandii", "score": 3, "id": 363}, {"name": "איקליפטוס ססגוני", "scientific": "Eucalyptus diversicolor", "score": 3, "id": 364}, {"name": "איקליפטוס סרגנטי", "scientific": "Eucalyptus sargentii", "score": 3, "id": 365}, {"name": "איקליפטוס עדין", "scientific": "Eucalyptus gracilis", "score": 3, "id": 366}, {"name": "איקליפטוס עפיץ", "scientific": "Eucalyptus astringens", "score": 3, "id": 367}, {"name": "איקליפטוס ערבתי", "scientific": "Eucalyptus saligna", "score": 3, "id": 368}, {"name": "איקליפטוס פורה", "scientific": "Eucalyptus foecunda", "score": 3, "id": 369}, {"name": "איקליפטוס פורמני", "scientific": "Eucalyptus formanii", "score": 3, "id": 370}, {"name": "איקליפטוס פלוקטון", "scientific": "Eucalyptus flocktoniae", "score": 3, "id": 371}, {"name": "איקליפטוס פרין", "scientific": "Eucalyptus perriniana", "score": 3, "id": 372}, {"name": "איקליפטוס צפוף", "scientific": "Eucalyptus crebra", "score": 3, "id": 373}, {"name": "איקליפטוס צפצפתי", "scientific": "Eucalyptus populnea", "score": 3, "id": 374}, {"name": "איקליפטוס קינגסמיל", "scientific": "Eucalyptus kingsmillii", "score": 3, "id": 375}, {"name": "איקליפטוס קמחי", "scientific": "Eucalyptus pruinosa", "score": 3, "id": 376}, {"name": "איקליפטוס קרנוני", "scientific": "Eucalyptus cornuta", "score": 3, "id": 377}, {"name": "איקליפטוס רב-פרחים", "scientific": "Eucalyptus polyanthemos", "score": 3, "id": 378}, {"name": "איקליפטוס שונה-עלים", "scientific": "Eucalyptus diversifolia", "score": 3, "id": 379}, {"name": "איקליפטוס שחור-סות", "scientific": "Eucalyptus melanophloia", "score": 3, "id": 521}, {"name": "איקליפטוס שטייגר", "scientific": "Eucalyptus staigeriana", "score": 3, "id": 380}, {"name": "איקליפטוס שמוט", "scientific": "Eucalyptus tereticornis", "score": 3, "id": 381}, {"name": "איקליפטוס שרפי", "scientific": "Eucalyptus resinifera", "score": 3, "id": 382}, {"name": "איקלפטוס המקור (מכון)", "scientific": "Eucalyptus camaldulensis (מכון)", "score": 3, "id": 384}, {"name": "איקלפטוס המקור (עומר)", "scientific": "Eucalyptus camaldulensis 'עומר '", "score": 3, "id": 383}, {"name": "איקלפטוס הצוארון (צהב עומר)", "scientific": "Eucalyptus torquata צהב 'omer'", "score": 3, "id": 385}, {"name": "איקלפטוס קלילנד", "scientific": "Eucalyptus clelandii", "score": 3, "id": 386}, {"name": "אלביציה ורודה", "scientific": "Albizia julibrissin", "score": 3, "id": 32}, {"name": "אלביציה צהובה", "scientific": "Albizia lebbeck", "score": 3, "id": 33}, {"name": "אלה אטלנטית", "scientific": "Pistacia atlantica", "score": 5, "id": 34}, {"name": "אלה ארץ-ישראלית", "scientific": "Pistacia palaestina", "score": 4, "id": 35}, {"name": "אלה סינית", "scientific": "Pistacia chinensis", "score": 3, "id": 36}, {"name": "אלומגן חרמשי", "scientific": "Erythrina falcata", "score": 3, "id": 563}, {"name": "אלון אנגלי", "scientific": "Quercus robur", "score": 4, "id": 37}, {"name": "אלון ארך-עוקצים", "scientific": "Quercus pedunculiflora", "score": 4, "id": 38}, {"name": "אלון הגלעין", "scientific": "Quercus ilex", "score": 5, "id": 39}, {"name": "אלון הלבנון", "scientific": "Quercus libani", "score": 4, "id": 40}, {"name": "אלון השעם", "scientific": "Quercus suber", "score": 5, "id": 41}, {"name": "אלון התבור", "scientific": "Quercus ithaburensis", "score": 5, "id": 42}, {"name": "אלון התולע", "scientific": "Quercus boissieri", "score": 5, "id": 43}, {"name": "אלון מצוי", "scientific": "Quercus calliprino", "score": 5, "id": 44}, {"name": "אלון שסוע", "scientific": "Quercus cerris", "score": 4, "id": 45}, {"name": "אלמוגן אתיופי", "scientific": "Erythrina abyssinica", "score": 3, "id": 46}, {"name": "אלמוגן הודי", "scientific": "Erythrina indica", "score": 3, "id": 47}, {"name": "אלמוגן כרבולתי", "scientific": "Erythrina crista-galli", "score": 3, "id": 48}, {"name": "אלמוגן מעולה", "scientific": "Erythrina insignis", "score": 3, "id": 389}, {"name": "אלמוגן נשפוני", "scientific": "Erythrina vespertilio", "score": 3, "id": 390}, {"name": "אלמוגן צר-פרחים", "scientific": "Erythrina princeps", "score": 3, "id": 391}, {"name": "אלמוגן רחב-עלים", "scientific": "Erythrina corallodendrum", "score": 3, "id": 49}, {"name": "אלת הבוטנה", "scientific": "Pistacia vera", "score": 4, "id": 50}, {"name": "אלת מסטיק", "scientific": "Pistacia lentiscus", "score": 4, "id": 392}, {"name": "אנטרולוביום עגול-פרי", "scientific": "Enterolobium cyclocarpum", "score": 3, "id": 51}, {"name": "אפרסמון אמריקני", "scientific": "Diospyros virginiana", "score": 3, "id": 522}, {"name": "אפרסמון יפני (זנים שונים)", "scientific": "Diospyros kaki", "score": 2, "id": 523}, {"name": "אפרסק מצוי", "scientific": "Persica vulgaris", "score": 2, "id": 54}, {"name": "אקמנה סמיטי", "scientific": "Acmena smithii", "score": 2, "id": 524}, {"name": "אראוקריה רמה", "scientific": "Araucaria heterophylla", "score": 4, "id": 56}, {"name": "אראוקריית בידוויל", "scientific": "Araucaria bidwiillii", "score": 4, "id": 57}, {"name": "ארז אטלנטי", "scientific": "Cedrus atlantica", "score": 5, "id": 58}, {"name": "ארז הימלאי", "scientific": "Cedrus deodara", "score": 5, "id": 59}, {"name": "ארז הלבנון", "scientific": "Cedrus libani", "score": 5, "id": 60}, {"name": "ארכי-תמר אלכסנדרה", "scientific": "Archontophoenix alexandrae", "score": 3, "id": 525}, {"name": "אשחר ארץ-ישראלי", "scientific": "Rhamnus lycioides", "score": 3, "id": 393}, {"name": "אשחר רחב-עלים", "scientific": "Rhamnus alaternus", "score": 2, "id": 62}, {"name": "אשל החוף", "scientific": "Tamarix sp.", "score": 3, "id": 394}, {"name": "אשל הירדן", "scientific": "Tamarix jordanis", "score": 3, "id": 395}, {"name": "אשל הפרקים", "scientific": "Tamarix aphylla", "score": 3, "id": 63}, {"name": "אשל סיני", "scientific": "Tamarix chinensis", "score": 2, "id": 526}, {"name": "אשל צרפתי", "scientific": "Tamarix gallica", "score": 3, "id": 396}, {"name": "אשל קטן-פרחים", "scientific": "Tamarix parviflora", "score": 3, "id": 397}, {"name": "בוהיניה ארגמנית", "scientific": "Bauhinia purpurea", "score": 3, "id": 398}, {"name": "בוהיניה טורטיקטה", "scientific": "Bauhinia torticata", "score": 3, "id": 399}, {"name": "בוהיניה יחידת-מאבק", "scientific": "Bauhinia monandra", "score": 3, "id": 400}, {"name": "בוהיניה מגוונת", "scientific": "Bauhinia variegate", "score": 3, "id": 65}, {"name": "בוהיניית בלק", "scientific": "Bauhinia blakeana", "score": 3, "id": 401}, {"name": "בוהיניית קרון", "scientific": "Bauhinia carronii", "score": 3, "id": 402}, {"name": "בוטיה דרומית", "scientific": "Butia capitata", "score": 3, "id": 66}, {"name": "בולוסנתוס נאה", "scientific": "Bolusanthus specious", "score": 4, "id": 67}, {"name": "בומבק צייבה", "scientific": "Bombax ceiba", "score": 3, "id": 68}, {"name": "בוקיצה אמריקנית", "scientific": "Ulmus americana", "score": 2, "id": 69}, {"name": "בוקיצה נמוכה", "scientific": "Ulmus pumila", "score": 2, "id": 70}, {"name": "בוקיצה קטנת-עלים", "scientific": "Ulmus parvifolia", "score": 3, "id": 71}, {"name": "בוקיצה שעירה", "scientific": "Ulmus canescens", "score": 3, "id": 72}, {"name": "ביסמרקיה אצילה", "scientific": "Bismarckia nobilis", "score": 3, "id": 73}, {"name": "בירנית מפושקת", "scientific": "Pleno Flore divaricata Tabernaemontana", "score": 3, "id": 403}, {"name": "בן עוזרר דלקורי", "scientific": "Raphiolepis delacouri", "score": 2, "id": 404}, {"name": "בר-זית בינוני", "scientific": "Phillyrea latifolia", "score": 3, "id": 528}, {"name": "ברוש אריזוני", "scientific": "Cupressus arizonica", "score": 4, "id": 75}, {"name": "ברוש בייקר", "scientific": "Cupressus bakeri", "score": 4, "id": 405}, {"name": "ברוש בכות", "scientific": "Cupressus funebris", "score": 4, "id": 76}, {"name": "ברוש גדול-פירות", "scientific": "Cupressus macrocarpa", "score": 2, "id": 77}, {"name": "ברוש הדור", "scientific": "Cupressus elegans", "score": 4, "id": 406}, {"name": "ברוש מצוי", "scientific": "Cupressus sempervirens", "score": 4, "id": 78}, {"name": "ברוש פורטוגלי", "scientific": "Cupressus lusitanica", "score": 4, "id": 79}, {"name": "ברוש קירח", "scientific": "Cupressus glabra", "score": 4, "id": 527}, {"name": "ברוש קשמירי", "scientific": "Cupressus cashmeriana", "score": 4, "id": 81}, {"name": "ברזילי הדור", "scientific": "Metrosideros excelsa", "score": 3, "id": 82}, {"name": "ברכיכיטון אדרי", "scientific": "Brachychiton aserifolius", "score": 3, "id": 84}, {"name": "ברכיכיטון אוסטרלי", "scientific": "Brachychiton australis", "score": 3, "id": 85}, {"name": "ברכיכיטון בידוויל", "scientific": "Brachychiton bidwillii", "score": 3, "id": 86}, {"name": "ברכיכיטון גרגור", "scientific": "Brachychiton gregori", "score": 3, "id": 407}, {"name": "ברכיכיטון דו-גוני", "scientific": "Brachychiton discolor", "score": 3, "id": 83}, {"name": "ברכיכיטון הסלעים", "scientific": "Brachychiton rupestris", "score": 3, "id": 87}, {"name": "ברכיכיטון צפצפתי", "scientific": "Brachychiton populneum", "score": 3, "id": 88}, {"name": "ברסאיה (שפלרה) מקרינה", "scientific": "Brassaia actinophylla", "score": 2, "id": 529}, {"name": "גויאבה מצויה (זנים שונים)", "scientific": "Psidium guajava", "score": 2, "id": 89}, {"name": "גויאבה תותית (זנים שונים)", "scientific": "Psidium cattleianum", "score": 2, "id": 530}, {"name": "גופנן המדבר", "scientific": "Cordia myxa", "score": 3, "id": 544}, {"name": "גינקו דו-אונתי", "scientific": "Ginkgo biloba", "score": 4, "id": 91}, {"name": "גלדיצייה תלת-קוצית", "scientific": "Gleditsia triacanthos", "score": 3, "id": 92}, {"name": "גרווילאה חסונה", "scientific": "Grevillea robusta", "score": 3, "id": 93}, {"name": "דובדבן חמוץ", "scientific": "Cerasus vulgaris", "score": 3, "id": 408}, {"name": "דובדבן יפני", "scientific": "Cerasus serrulata", "score": 3, "id": 409}, {"name": "דובדבן מהלב", "scientific": "Cerasus mahaleb", "score": 3, "id": 410}, {"name": "דובדבן מתוק", "scientific": "Cerasus avium", "score": 3, "id": 411}, {"name": "דולב אדרי", "scientific": "Platanus acerifolia", "score": 3, "id": 95}, {"name": "דולב מזרחי", "scientific": "Platanus orientalis", "score": 4, "id": 96}, {"name": "דולב מכסיקני", "scientific": "Platanus mexicana", "score": 4, "id": 97}, {"name": "דולב קליפורני", "scientific": "Platanus racemoca", "score": 3, "id": 98}, {"name": "דום מצרי", "scientific": "Hyphaena thebaica", "score": 4, "id": 99}, {"name": "דומביאה וליך", "scientific": "Dombeya wallichii", "score": 4, "id": 412}, {"name": "דומביאה עגולת-עלים", "scientific": "Dombeya rotundifolia", "score": 3, "id": 100}, {"name": "דיספיס משולש", "scientific": "Dypsis decarii", "score": 1, "id": 518}, {"name": "דיפסיס לוטסנס", "scientific": "Dypsis (Chrysalidocarpus) lutescens", "score": 3, "id": 531}, {"name": "דק-פרי זקוף", "scientific": "Tecoma stans", "score": 2, "id": 103}, {"name": "דק-פרי ערמוני", "scientific": "Tecoma castanifolia", "score": 3, "id": 104}, {"name": "דקל זנב השועל", "scientific": "Wodyetia bifurcata", "score": 3, "id": 532}, {"name": "דקל רובליני", "scientific": "Phoenix roebelenii", "score": 4, "id": 413}, {"name": "דקל רווניאת הפלגים", "scientific": "Ravenea rivularis", "score": 2, "id": 533}, {"name": "דרקונית קנרית", "scientific": "Dracaena draco", "score": 4, "id": 106}, {"name": "הדר האשכולית ", "scientific": "Citrus paradisi", "score": 2, "id": 107}, {"name": "הדר האתרוג ", "scientific": "Citrus medica", "score": 2, "id": 108}, {"name": "הדר החושחש", "scientific": "Citrus aurantium", "score": 3, "id": 109}, {"name": "הדר הלימה", "scientific": "Citrus aurantiifolia", "score": 3, "id": 414}, {"name": "הדר הלימון", "scientific": "Citrus limon", "score": 3, "id": 110}, {"name": "הדר הלימונית", "scientific": "Citrus limetta", "score": 2, "id": 415}, {"name": "הדר המנדרין", "scientific": "Citrus reticulata", "score": 2, "id": 111}, {"name": "הדר הפומלו ", "scientific": "Citrus grandis", "score": 2, "id": 112}, {"name": "הדר הקלמנטינה", "scientific": "Citrus Clementine", "score": 2, "id": 514}, {"name": "הדר התפוז ", "scientific": "Citrus sinensis", "score": 2, "id": 113}, {"name": "הווניה מתוקה", "scientific": "Hovenia dulcis", "score": 3, "id": 114}, {"name": "הומלנתוס צפצפתי", "scientific": "Homalanthus populifolius", "score": 2, "id": 115}, {"name": "הטרומלס קטלבי", "scientific": "Heteromeles arbutifolia", "score": 3, "id": 116}, {"name": "היביסקוס חליף", "scientific": "Hibiscus mutabilis", "score": 3, "id": 416}, {"name": "היביסקוס טילייתי ('סתריה')", "scientific": "Hibiscus tiliaceus", "score": 3, "id": 417}, {"name": "היביסקוס רם", "scientific": "Hibiscus elatus", "score": 2, "id": 117}, {"name": "הינומית צהובה", "scientific": "Hymenosporum flavum", "score": 3, "id": 118}, {"name": "הרדוף הנחלים (על גזע)", "scientific": "Nerium oleander ", "score": 3, "id": 418}, {"name": "וושינגטוניה חוטית", "scientific": "Washingtonia filifera", "score": 3, "id": 119}, {"name": "וושינגטוניה חסונה", "scientific": "Washingtonia Robusta", "score": 3, "id": 120}, {"name": "זית אירופי", "scientific": "Olea europaea", "score": 4, "id": 121}, {"name": "זלקובה משורית", "scientific": "Zelkova serrate", "score": 4, "id": 122}, {"name": "זקום מצרי", "scientific": "Balanites aegyptiaca", "score": 4, "id": 123}, {"name": "זקיניה דוקרנית", "scientific": "pungens Jacquinia ", "score": 2, "id": 420}, {"name": "חאיה ניאסית", "scientific": "Khaya nyasica", "score": 3, "id": 535}, {"name": "חבוש מוארך", "scientific": "Cydonia oblonga", "score": 2, "id": 536}, {"name": "חוזרר החורש", "scientific": "Eriobolus trilobatus", "score": 4, "id": 537}, {"name": "חלבלוב דמוי-קוטינוס", "scientific": "Euphorbia cotinifolia", "score": 2, "id": 538}, {"name": "חלבלוב רותמי", "scientific": "Euphorbia tirucalli", "score": 2, "id": 128}, {"name": "חרוב מצוי", "scientific": "Ceratonia siliqua", "score": 4, "id": 129}, {"name": "טבבויה איפה", "scientific": "Tabebuia impetiginosa", "score": 4, "id": 130}, {"name": "טבבויה צהובה", "scientific": "Tabebuia chrysantha", "score": 3, "id": 131}, {"name": "טטרקליניס מפריק", "scientific": "Tetraclinis articulate", "score": 3, "id": 132}, {"name": "טיליה רחבת-עלים", "scientific": "Tilia platyphyllos", "score": 3, "id": 564}, {"name": "טכסודיון דו-טורי", "scientific": "Taxodium distichum", "score": 4, "id": 133}, {"name": "טקומן סיני", "scientific": "Radermachia sinica", "score": 3, "id": 134}, {"name": "טקסוס מעונב", "scientific": "Taxus baccata", "score": 4, "id": 421}, {"name": "טרכיקרפוס פורטון", "scientific": "Trachycarpus fortuni", "score": 4, "id": 135}, {"name": "טרמינליה הודית", "scientific": "Terminalia arjuna", "score": 3, "id": 136}, {"name": "יוקה דרומית", "scientific": "Yucca australis", "score": 4, "id": 422}, {"name": "יוקה פילית", "scientific": "Yucca elephantipes", "score": 4, "id": 423}, {"name": "יטרופית מחולקת", "scientific": "Jatropha multifida", "score": 2, "id": 425}, {"name": "יטרופית קצרת-אונות", "scientific": "Jatropha curcas", "score": 2, "id": 426}, {"name": "יטרופית תמימה", "scientific": "Jatropha integerrima", "score": 2, "id": 539}, {"name": "ינבוט המסקיטו", "scientific": "Prosopis juliflora", "score": 2, "id": 137}, {"name": "ינבוט לבן", "scientific": "Prosopis alba", "score": 3, "id": 138}, {"name": "יצהרון מכסיף", "scientific": "Elaeagnus angutifolia", "score": 3, "id": 139}, {"name": "כוריזיה בקבוקית", "scientific": "Chorisia insignis", "score": 3, "id": 141}, {"name": "כוריזיה הדורה", "scientific": "Chorisia speciosa", "score": 4, "id": 142}, {"name": "כיטלפת טשקנט", "scientific": "Chitalpa tashkentensis X", "score": 3, "id": 143}, {"name": "כילופסיס סרגלי", "scientific": "Chilopsis linearis", "score": 3, "id": 144}, {"name": "כליל החורש", "scientific": "Cercis siliquastrum", "score": 4, "id": 145}, {"name": "כליל קנדי", "scientific": "Cercis canadensis", "score": 3, "id": 146}, {"name": "כמרופס נמוך", "scientific": "Chamaerops humilis", "score": 5, "id": 147}, {"name": "כנף-זרע אדרי", "scientific": "pterospermum acerifolium", "score": 4, "id": 148}, {"name": "כסיית האבוב", "scientific": "Cassia fistula", "score": 3, "id": 149}, {"name": "כרבל לביד", "scientific": "Alectryon tomentosum", "score": 3, "id": 150}, {"name": "לבן- עלה שיחני גרין קלאוד", "scientific": "Leucophyllum frutescens - Green Cloud ", "score": 3, "id": 427}, {"name": "לבנה רפואי", "scientific": "Styrax officinalis", "score": 4, "id": 151}, {"name": "לגונריית פטרסון", "scientific": "Lagunaria patersonii", "score": 3, "id": 152}, {"name": "לגרסטרמיה הודית", "scientific": "Lagerstroemia indica", "score": 3, "id": 153}, {"name": "ליגוסטרום יפני", "scientific": "Ligustrum japonicum", "score": 3, "id": 154}, {"name": "ליוויסטונה סינית", "scientific": "Livistona chinensis", "score": 4, "id": 428}, {"name": "ליקווידמבר לבני", "scientific": "liquidambar styraciflua", "score": 3, "id": 156}, {"name": "מגלון אפריקני", "scientific": "Harpephyllum caffrum", "score": 3, "id": 157}, {"name": "מגנוליה גדולת-פרחים", "scientific": "Magnolia grandiflora", "score": 4, "id": 158}, {"name": "מורינגה מכונפת", "scientific": "Moringa oleifera", "score": 3, "id": 159}, {"name": "מורינגה רותמית", "scientific": "Moringa peregrine", "score": 3, "id": 160}, {"name": "מורן החורש", "scientific": "Viburnum tinus", "score": 1, "id": 540}, {"name": "מטאסקוויה סינית", "scientific": "Metasequoia glyptostroboides", "score": 4, "id": 541}, {"name": "מייש", "scientific": "Celtis sp.", "score": 4, "id": 429}, {"name": "מייש אפריקני", "scientific": "Celtis africana", "score": 3, "id": 167}, {"name": "מייש בונגה", "scientific": "Celtis bungeana", "score": 4, "id": 168}, {"name": "מייש דרומי", "scientific": "Celtis australis", "score": 4, "id": 169}, {"name": "מייש הכף", "scientific": "Celtis capensis", "score": 4, "id": 430}, {"name": "מייש חלק", "scientific": "Celtis laevigata", "score": 4, "id": 431}, {"name": "מייש מערבי", "scientific": "Celtis occidentalis", "score": 4, "id": 432}, {"name": "מייש מרובע", "scientific": "Celtis tetrandra", "score": 4, "id": 433}, {"name": "מייש מרושת", "scientific": "Celtis reticulata", "score": 4, "id": 434}, {"name": "מייש סיני", "scientific": "Celtis sinensis", "score": 3, "id": 170}, {"name": "מייש קווקזי", "scientific": "Celtis caucasica", "score": 4, "id": 435}, {"name": "מייש קוצני", "scientific": "Celtis spinosa", "score": 4, "id": 436}, {"name": "מילה אמריקנית", "scientific": "Fraxinus Americana", "score": 3, "id": 162}, {"name": "מילה ירוקת-עד", "scientific": "Fraxinus uhde", "score": 4, "id": 163}, {"name": "מילה לבנת-פרחים", "scientific": "Fraxinus ornus", "score": 3, "id": 164}, {"name": "מילה סורית", "scientific": "Fraxinus syriaca", "score": 4, "id": 165}, {"name": "מילה פנסילוונית", "scientific": "Fraxinus pennsylvanica", "score": 4, "id": 166}, {"name": "מירסיאנתוס ריחני", "scientific": "Myrcianthes fragrans", "score": 2, "id": 437}, {"name": "מכנף נאה", "scientific": "Tipuana tipu", "score": 3, "id": 171}, {"name": "מללויקה דקת-קליפה", "scientific": "Melaleuca halmaturorum", "score": 3, "id": 438}, {"name": "מללויקה ירוקת-פרחים", "scientific": "Melaleuca viridiflora", "score": 3, "id": 439}, {"name": "מללויקה לבנת-קליפה", "scientific": "Melaleuca styphelioides", "score": 3, "id": 440}, {"name": "מללויקה מאפירה", "scientific": "Melaleuca incana", "score": 3, "id": 441}, {"name": "מללויקה מחפה", "scientific": "Melaleuca bracteata", "score": 3, "id": 442}, {"name": "מללויקה מכסיפה", "scientific": "Melaleuca argentea", "score": 3, "id": 443}, {"name": "מללויקה מצומדת", "scientific": "Melaleuca armillaris", "score": 3, "id": 444}, {"name": "מללויקה מתקלפת", "scientific": "Melaleuca nesophylla", "score": 3, "id": 445}, {"name": "מללויקה קטנת-פרחים", "scientific": "Melaleuca parviflora", "score": 3, "id": 446}, {"name": "מללויקה רותמית", "scientific": "Melaleuca genistifolia", "score": 3, "id": 447}, {"name": "מללויקה רחבת-עלים", "scientific": "Melaleuca leucadendra", "score": 3, "id": 448}, {"name": "מללויקת כלאיים", "scientific": "Melaleuca 'hybrid'", "score": 3, "id": 449}, {"name": "מנגו הודי", "scientific": "Mangifera indica", "score": 3, "id": 173}, {"name": "מקדמיה רבועה", "scientific": "Macadamia tetraphylla", "score": 3, "id": 174}, {"name": "מקלורה זהובה", "scientific": "Maclura pomifera", "score": 3, "id": 450}, {"name": "מרואה עבת-עלים", "scientific": "Maerua crassifolia", "score": 4, "id": 175}, {"name": "מרקמיה צהובה", "scientific": "Markhamia lutea", "score": 2, "id": 176}, {"name": "מתחלית פעמונית", "scientific": "Spathodea campanulata", "score": 3, "id": 177}, {"name": "סבל פלמטו", "scientific": "Sabal palmetto", "score": 3, "id": 178}, {"name": "סהרון קשה עלים", "scientific": "laurifolia Cocculus", "score": 3, "id": 451}, {"name": "סולנום גדול", "scientific": "Solanum macranthum", "score": 2, "id": 179}, {"name": "סופורה אמריקנית", "scientific": "Sophora secundiflora", "score": 3, "id": 180}, {"name": "סופורה יפנית", "scientific": "Sophora japonica", "score": 4, "id": 181}, {"name": "סטיפנולוביום יפני", "scientific": "Styphnolobium japonicum", "score": 4, "id": 452}, {"name": "סטנוקרפוס הגלגלים", "scientific": "Stenocarpus sinuatus", "score": 2, "id": 542}, {"name": "סיגלון עלי-מימוסה", "scientific": "Jacaranda mimosifolia", "score": 4, "id": 182}, {"name": "סיזיגיון אוסטרלי", "scientific": "Syzygium austral", "score": 3, "id": 183}, {"name": "סיזיגיון ימבולן", "scientific": "Syzygium jambolan", "score": 3, "id": 184}, {"name": "סיזיגיון מכבדי", "scientific": "Syzygium paniculatum", "score": 3, "id": 185}, {"name": "סייגרוס רומנזוף", "scientific": "Syagrus romanzoffianum", "score": 2, "id": 186}, {"name": "סיסם הודי", "scientific": "Dalbergia sissoo", "score": 4, "id": 187}, {"name": "ספיון השעוה", "scientific": "Sapium sebiferum", "score": 4, "id": 188}, {"name": "סקויה נאה", "scientific": "Sequoia sempervirens", "score": 4, "id": 543}, {"name": "עוזרר אדום", "scientific": "Crataegus azarolus", "score": 4, "id": 190}, {"name": "עוזרר קוצני", "scientific": "Crataegus aronia", "score": 4, "id": 191}, {"name": "ער אציל", "scientific": "Laurus nobilis", "score": 4, "id": 192}, {"name": "ער קנרי", "scientific": "Laurus canariensis", "score": 4, "id": 453}, {"name": "ערבה מחודדת", "scientific": "Salix acmophylla", "score": 3, "id": 193}, {"name": "ערבה מצודנה", "scientific": "Salix matsudana", "score": 3, "id": 454}, {"name": "ערבה צריפית ", "scientific": "Salix humboldtiana", "score": 2, "id": 194}, {"name": "ערבה רותמית", "scientific": "Salix viminalis", "score": 3, "id": 455}, {"name": "ערבה שבירה", "scientific": "Salix fragilis", "score": 3, "id": 456}, {"name": "ערבת בבל", "scientific": "Salix babylonica", "score": 3, "id": 195}, {"name": "ערמונית הסוסים", "scientific": "Aesculus hippocastanum", "score": 4, "id": 457}, {"name": "ערער אדום", "scientific": "Juniperus phoenicea", "score": 4, "id": 459}, {"name": "ערער ארזני", "scientific": "Juniperus oxycedrus", "score": 4, "id": 460}, {"name": "ערער ברמודי", "scientific": "Juniperus bermudiana", "score": 4, "id": 461}, {"name": "ערער הגלעין", "scientific": "Juniperus drupacea", "score": 4, "id": 462}, {"name": "ערער המצוקים", "scientific": "Juniperus scopulorum", "score": 4, "id": 463}, {"name": "ערער וירגיני", "scientific": "Juniperus virginiana", "score": 4, "id": 464}, {"name": "ערער חד-זרעי", "scientific": "Juniperus monosperma", "score": 4, "id": 465}, {"name": "ערער לוקייני", "scientific": "Juniperus lucayana", "score": 4, "id": 466}, {"name": "ערער מצוי", "scientific": "Juniperus communis", "score": 4, "id": 467}, {"name": "ערער סיני", "scientific": "Juniperus chinensis", "score": 3, "id": 468}, {"name": "ערער ספרדי", "scientific": "Juniperus thurifera", "score": 4, "id": 469}, {"name": "ערער רד-פנסיל", "scientific": "Juniperus 'Red Pencil'", "score": 4, "id": 458}, {"name": "ערער רם", "scientific": "Juniperus excels", "score": 4, "id": 196}, {"name": "פארון הכף", "scientific": "Calodendrum capensis", "score": 4, "id": 198}, {"name": "פודוקרפוס גדול-עלים", "scientific": "Podocarpus macrophyllus", "score": 4, "id": 199}, {"name": "פודוקרפוס מגלי", "scientific": "Podocarpus falcatus", "score": 4, "id": 200}, {"name": "פולובניית פרוטון", "scientific": "Paulownia fortune", "score": 2, "id": 545}, {"name": "פונגמיה מנוצה", "scientific": "Pongamia pinnata", "score": 3, "id": 202}, {"name": "פטרוקריה מיילנית", "scientific": "Pterocarya fraxinifolia", "score": 3, "id": 203}, {"name": "פיג'ואה תרבותית", "scientific": "Feijoa sellowiana", "score": 3, "id": 204}, {"name": "פיטולקה דו-ביתית", "scientific": "Phytolacca dioica", "score": 4, "id": 205}, {"name": "פיטוספורום גלוני", "scientific": "Pittosporum undulatum", "score": 4, "id": 206}, {"name": "פיטוספורום יפני", "scientific": "Pittosporum tobira", "score": 4, "id": 546}, {"name": "פיקוס אוזני", "scientific": "Ficus auriculata", "score": 3, "id": 208}, {"name": "פיקוס בנגלי", "scientific": "Ficus bengalensis", "score": 4, "id": 209}, {"name": "פיקוס בנימינה", "scientific": "Ficus benjamina", "score": 3, "id": 210}, {"name": "פיקוס בת-שקמה", "scientific": "Ficus pseudo-sycomorus", "score": 4, "id": 470}, {"name": "פיקוס הגומי", "scientific": "Ficus elastic", "score": 3, "id": 211}, {"name": "פיקוס השדרות", "scientific": "Ficus microcarpa", "score": 4, "id": 212}, {"name": "פיקוס השקמה ", "scientific": "Ficus sycomorus", "score": 4, "id": 213}, {"name": "פיקוס התאנה", "scientific": "Ficus carica", "score": 3, "id": 214}, {"name": "פיקוס חלוד", "scientific": "Ficus rubiginosa", "score": 3, "id": 215}, {"name": "פיקוס כינורי", "scientific": "Ficus lyrata", "score": 3, "id": 216}, {"name": "פיקוס מעוקם", "scientific": "Ficus oblique", "score": 4, "id": 217}, {"name": "פיקוס צר-עלים", "scientific": "Ficus binnendijkii", "score": 3, "id": 218}, {"name": "פיקוס קדוש", "scientific": "Ficus religiosa", "score": 3, "id": 219}, {"name": "פירמיאנה פשוטה", "scientific": "Firmiana simplex", "score": 4, "id": 547}, {"name": "פלומריה ריחנית", "scientific": "Plumeria rubra", "score": 3, "id": 221}, {"name": "פלפלון בכות", "scientific": "Schinus molle", "score": 3, "id": 222}, {"name": "פלפלון דמוי-אלה", "scientific": "Schinus terebinthifolius", "score": 2, "id": 223}, {"name": "פנסית דו-נוצתית", "scientific": "Koelreuteria bipinnata", "score": 3, "id": 224}, {"name": "פנסית מכבדית", "scientific": "Koelreuteria paniculata", "score": 3, "id": 225}, {"name": "פפיה מצויה", "scientific": "Carica papaya", "score": 2, "id": 548}, {"name": "פרקינסוניה שיכנית", "scientific": "Parkinsonia aculeata", "score": 0, "id": 227}, {"name": "צאלון נאה", "scientific": "Delonix regia", "score": 4, "id": 228}, {"name": "צחר כחלחל", "scientific": "Leucaena leucocephala", "score": 0, "id": 229}, {"name": "צייבה מחומשת", "scientific": "Ceiba Pantandra", "score": 4, "id": 230}, {"name": "צינית מקרינה", "scientific": "Ilex cornuta", "score": 3, "id": 549}, {"name": "צינית קרולינית וויל פלמינג", "scientific": "Ilex vomitoria", "score": 2, "id": 471}, {"name": "צינית קרולינית פריד אוף יוסטון", "scientific": "Ilex vomitoria Pride of Houston", "score": 2, "id": 472}, {"name": "ציקס מופשל", "scientific": "Cycas revoluta ", "score": 5, "id": 473}, {"name": "צפצפה מכסיפה", "scientific": "Populus alba", "score": 3, "id": 232}, {"name": "צפצפה מקוצעת", "scientific": "Populus angulate", "score": 3, "id": 233}, {"name": "צפצפה שחורה", "scientific": "Populus nigra", "score": 3, "id": 234}, {"name": "צפצפת הפרת", "scientific": "Populus euphratica", "score": 4, "id": 235}, {"name": "קוטינוס מזרחי", "scientific": "Cotinus coggygria", "score": 3, "id": 550}, {"name": "קולווילאה אשכולית", "scientific": "Colvillea racemosa", "score": 3, "id": 237}, {"name": "קוסוניה משובלת", "scientific": "Cussonia spicata", "score": 3, "id": 238}, {"name": "קופניון אנקרדי", "scientific": "Cupaniopsis anacardioides", "score": 3, "id": 551}, {"name": "קזוארינה אשונה", "scientific": "Allocasuarina verticillata", "score": 3, "id": 388}, {"name": "קזוארינה סיבית", "scientific": "inophloia Casuarina ", "score": 3, "id": 474}, {"name": "קזוארינה שבטבטית", "scientific": "Casuarina equisetifolia", "score": 3, "id": 244}, {"name": "קטלב מצוי", "scientific": "Arbutus andrachne", "score": 5, "id": 245}, {"name": "קטלב משונן", "scientific": "Arbutus unedo", "score": 4, "id": 246}, {"name": "קטלפה ביגנונית", "scientific": "Catalpa bignonioides", "score": 3, "id": 247}, {"name": "קיגליה מנוצה", "scientific": "Kigelia pinnata", "score": 4, "id": 552}, {"name": "קינמון קמפורי", "scientific": "Cinnamomum camphora", "score": 4, "id": 249}, {"name": "קליאנדרה אדומת-פרי", "scientific": "Calliandra haematocarpa", "score": 3, "id": 478}, {"name": "קליאנדרה ורודת-קרקפות", "scientific": "Calliandra heamatocephala", "score": 3, "id": 475}, {"name": "קליאנדרה לבנת-קרקפת (ALBA)", "scientific": "Calliandra heamatocephala alba", "score": 3, "id": 477}, {"name": "קליאנדרה קליפורנית", "scientific": "Calliandra californica", "score": 3, "id": 476}, {"name": "קליאנדרת שולץ", "scientific": "Calliandra schultzei", "score": 3, "id": 479}, {"name": "קליטריס כחלחל", "scientific": "Callitris glaucophylla", "score": 3, "id": 250}, {"name": "קליטריס מיובל", "scientific": "Callitris verrucosa", "score": 3, "id": 480}, {"name": "קליסטמון אדום", "scientific": "Callistemon phoeniceus", "score": 3, "id": 553}, {"name": "קליסטמון הנצרים", "scientific": "Callistemon viminalis", "score": 3, "id": 252}, {"name": "קליסטמון תרוג", "scientific": "Callistemon citrinus", "score": 3, "id": 254}, {"name": "קנטיה פורסטר", "scientific": "Howea (Kentia) forsteriana", "score": 3, "id": 554}, {"name": "קסאלפיניה יפהפייה ", "scientific": "Caesalpinia pulcherrima", "score": 3, "id": 481}, {"name": "קסילוסמת זלצמן", "scientific": "Xylosma salzmannii", "score": 4, "id": 256}, {"name": "קריוטה נאה", "scientific": "Caryota mitis", "score": 3, "id": 257}, {"name": "קריית הפקן", "scientific": "Carya illinoinensis", "score": 3, "id": 258}, {"name": "קתרוסית מרובעת", "scientific": "Citharexylum spinosum", "score": 3, "id": 259}, {"name": "רואיסטוניה רג'ה- דקל המלך (דקל קוקוס)", "scientific": "Roestonia regia", "score": 2, "id": 516}, {"name": "רוביניה בת-שיטה", "scientific": "Robinia pseudo-acacia", "score": 2, "id": 260}, {"name": "רוולנה מדגסקרית", "scientific": "Ravenala madagascariensis", "score": 3, "id": 555}, {"name": "רומם מלכותי", "scientific": "Roysotnea regia", "score": 3, "id": 263}, {"name": "רימון מצוי", "scientific": "Punica granatum", "score": 3, "id": 264}, {"name": "רפיס רם", "scientific": "Rhapis excalsa", "score": 2, "id": 265}, {"name": "שדר משתלשל", "scientific": "Betula pendula", "score": 3, "id": 266}, {"name": "שוטיה רחבת-עלים", "scientific": "Schotia latifolia", "score": 3, "id": 267}, {"name": "שזיף דובדבני 'אדום'/'שחור'", "scientific": "Prunus cerasifera 'Atropurpurea'/'Nigra'", "score": 3, "id": 556}, {"name": "שזיף מינים שונים", "scientific": "Prunus spp", "score": 2, "id": 557}, {"name": "שזיף פעמוני", "scientific": "Prunus campanulata", "score": 3, "id": 270}, {"name": "שיזף מצוי", "scientific": "Zizphus spina-christi", "score": 4, "id": 271}, {"name": "שיטה ארכת-עלים / שיטה עלי-ערבה", "scientific": "Acacia longifolia", "score": 2, "id": 482}, {"name": "שיטה גלדנית", "scientific": "Acacia coriacea", "score": 2, "id": 484}, {"name": "שיטה דוקרנית", "scientific": "Acacia paradoxa", "score": 0, "id": 558}, {"name": "שיטה דורית", "scientific": "Acacia verticillata", "score": 2, "id": 485}, {"name": "שיטה דמוית-פלפלון", "scientific": "Acacia schinoides", "score": 2, "id": 486}, {"name": "שיטה הקיאית", "scientific": "Acacia hakeoides", "score": 2, "id": 487}, {"name": "שיטה הרדופית", "scientific": "Acacia neriifolia", "score": 2, "id": 488}, {"name": "שיטה חד-קרנית", "scientific": "Acacia horrida", "score": 2, "id": 489}, {"name": "שיטה כחלחלה", "scientific": "Acacia saligna", "score": 0, "id": 272}, {"name": "שיטה לשונית", "scientific": "Acacia ligulata", "score": 2, "id": 490}, {"name": "שיטה מחוספסת-גביע", "scientific": "Acacia lasiocalyx", "score": 2, "id": 491}, {"name": "שיטה מחורצת", "scientific": "Acacia aulacocarpa", "score": 2, "id": 492}, {"name": "שיטה מלבינה", "scientific": "Faidherbia albida", "score": 4, "id": 273}, {"name": "שיטה משתלשלת", "scientific": "Acacia pendula", "score": 3, "id": 274}, {"name": "שיטה נאה", "scientific": "Acacia decora", "score": 2, "id": 493}, {"name": "שיטה נודעת", "scientific": "Acacia notabilis", "score": 2, "id": 494}, {"name": "שיטה נפוצה", "scientific": "Acacia congnata", "score": 2, "id": 495}, {"name": "שיטה סוככנית", "scientific": "Acacia tortilis", "score": 4, "id": 511}, {"name": "שיטה סיבית", "scientific": "Acacia fimbriata", "score": 2, "id": 496}, {"name": "שיטה סלילנית", "scientific": "Acacia raddiana", "score": 4, "id": 276}, {"name": "שיטה סנגלית", "scientific": "Acacia senegal", "score": 2, "id": 497}, {"name": "שיטה עגולת עלים", "scientific": "Acacia cyclops", "score": 0, "id": 559}, {"name": "שיטה צרת-עלים", "scientific": "Acacia stenophylla", "score": 2, "id": 498}, {"name": "שיטה קוון", "scientific": "Acacia caven", "score": 2, "id": 499}, {"name": "שיטה קטכו", "scientific": "Acacia catechu", "score": 2, "id": 500}, {"name": "שיטה קטנת-עלים", "scientific": "Acacia pravissima", "score": 2, "id": 501}, {"name": "שיטה קטנת-שינון", "scientific": "Acacia denticulosa", "score": 2, "id": 502}, {"name": "שיטה רבת-פרחים", "scientific": "Acacia pycnantha", "score": 2, "id": 503}, {"name": "שיטה ריסנית", "scientific": "Acacia salicina", "score": 2, "id": 504}, {"name": "שיטה רכה", "scientific": "Acacia decurrens", "score": 2, "id": 505}, {"name": "שיטה שחורת-עצה", "scientific": "Acacia melanoxylon", "score": 2, "id": 506}, {"name": "שיטת ביילי", "scientific": "Acacia baileyana", "score": 2, "id": 507}, {"name": "שיטת הוויט", "scientific": "Acacia howittii", "score": 2, "id": 508}, {"name": "שיטת המולגה", "scientific": "Acacia aneura", "score": 2, "id": 509}, {"name": "שיטת המקור", "scientific": "Acacia rostellifera", "score": 2, "id": 510}, {"name": "שיטת המשוכות", "scientific": "Vachellia farnesiana", "score": 1, "id": 277}, {"name": "שיטת הנגב", "scientific": "Vachellia gerrardii", "score": 5, "id": 278}, {"name": "שיטת ויקטוריה", "scientific": "Acacia", "score": 2, "id": 512}, {"name": "שיטת עלי-ערבה", "scientific": "Acacia salicina", "score": 0, "id": 560}, {"name": "שלטית אפריקנית", "scientific": "Peltophorum africanum", "score": 3, "id": 280}, {"name": "שלטית מקומטת", "scientific": "Peltophorum dubium", "score": 3, "id": 281}, {"name": "שסע פרהיבי", "scientific": "Schizolobium parahybum", "score": 3, "id": 561}, {"name": "שסק יפני", "scientific": "Eriobotrya japonica", "score": 3, "id": 283}, {"name": "שקד מצוי", "scientific": "Amygdalus communis", "score": 3, "id": 284}, {"name": "תויה מינים שונים", "scientific": "Thuja spp", "score": 3, "id": 562}, {"name": "תות לבן", "scientific": "Morus alba", "score": 3, "id": 286}, {"name": "תות שחור", "scientific": "Morus nigra", "score": 4, "id": 287}, {"name": "תמר מצוי", "scientific": "Phoenix dactylifera", "score": 2, "id": 517}, {"name": "תמר נטוי", "scientific": "Phoenix reclinata", "score": 3, "id": 289}, {"name": "תמר קנרי", "scientific": "Phoenix canariensis", "score": 2, "id": 290}, {"name": "תמרינד הודי", "scientific": "Tamarindus indica", "score": 4, "id": 291}, {"name": "תספזיה צפצפתית", "scientific": "Thespesia populnea", "score": 3, "id": 292}];
 
 let trees = {}; // id -> tree data
 let markers = {}; // id -> leaflet marker
@@ -1903,8 +1832,6 @@ function openSidebar(id) {
   document.getElementById('f-location').value = tree.location || '';
   document.getElementById('f-canopy').value = tree.canopy || '';
   document.getElementById('f-notes').value = tree.notes || '';
-  document.getElementById('f-gush').value = tree.gush || '';
-  document.getElementById('f-helka').value = tree.helka || '';
 
   // Species
   selectedSpeciesId = tree.speciesId;
@@ -1979,9 +1906,7 @@ function saveCurrentTree() {
     relocateProb: '',
     status: null,
     totalScore: total,
-    speciesId: selectedSpeciesId,
-    gush: document.getElementById('f-gush').value || tree.gush || '',
-    helka: document.getElementById('f-helka').value || tree.helka || ''
+    speciesId: selectedSpeciesId
   });
 
   document.getElementById('sidebar-tree-id').textContent = 'עץ ' + tree.number;
@@ -2298,10 +2223,14 @@ let _csvDragBaseOffsetLat = 0;
 let _csvDragBaseOffsetLng = 0;
 
 function openCsvOffsetModal() {
-  document.getElementById('csv-offset-modal').classList.remove('hidden');
+  const el = document.getElementById('csv-offset-modal');
+  el.classList.remove('hidden');
+  el.style.display = 'flex';
 }
 function closeCsvOffsetModal() {
-  document.getElementById('csv-offset-modal').classList.add('hidden');
+  const el = document.getElementById('csv-offset-modal');
+  el.classList.add('hidden');
+  el.style.display = 'none';
 }
 
 function _csvOffsetDegrees() {
@@ -3237,1326 +3166,3 @@ function _renderSignInBtn() {
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
-      כניסה באמצעות Google
-    </button>`;
-}
-
-function _signInClick() {
-  if (!_tokenClient) { _initAuth(); return; }
-  const btn = document.getElementById('gsi-custom-btn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = '...מתחבר'; }
-  // prompt:'select_account' — מציג בוחר חשבון, עובד גם ב-Testing mode
-  _tokenClient.requestAccessToken({ prompt: 'select_account' });
-}
-
-function _onTokenReceived(tokenResp) {
-  _silentLoginAttempt = false;
-  if (tokenResp.error) {
-    // Silent login failed — just show the sign-in button
-    console.warn('Token error (may be silent login):', tokenResp.error);
-    _renderSignInBtn();
-    return;
-  }
-  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { 'Authorization': 'Bearer ' + tokenResp.access_token }
-  })
-  .then(r => r.ok ? r.json() : {})
-  .then(info => {
-    // Save email for next auto-login
-    if (info.email) localStorage.setItem('seker_user_email', info.email);
-    onSignedIn({
-      name:        info.name    || info.email || 'משתמש',
-      email:       info.email   || '',
-      picture:     info.picture || '',
-      accessToken: tokenResp.access_token
-    });
-    // Schedule token refresh every 45 min (tokens expire after 60 min)
-    clearInterval(window._tokenRefreshTimer);
-    window._tokenRefreshTimer = setInterval(() => {
-      const email = localStorage.getItem('seker_user_email');
-      if (email && _tokenClient) {
-        _tokenClient.requestAccessToken({ prompt: '', login_hint: email });
-      }
-    }, 45 * 60 * 1000);
-  })
-  .catch(() => {
-    _renderSignInBtn();
-  });
-}
-
-function _showAuthError(msg) {
-  console.error(msg);
-  _renderSignInBtn(); // restore button so user can retry
-  const warn = document.getElementById('no-client-warning');
-  if (warn) {
-    warn.style.display = 'block';
-    warn.querySelector('span') && (warn.querySelector('span').textContent = msg);
-  }
-}
-
-function onSignedIn(user) {
-  window.gUser = user;
-  // Always reset sidebar state on load
-  document.getElementById('sidebar').classList.add('hidden');
-  document.getElementById('map').style.pointerEvents = '';
-  try { map.dragging.enable(); map.touchZoom.enable(); if(map.tap) map.tap.enable(); } catch(e){}
-  currentTreeId = null;
-  // Hide login screen
-  document.getElementById('login-screen').classList.add('hidden');
-  // Show user badge
-  if (user.picture) {
-    document.getElementById('user-avatar').src = user.picture;
-  } else {
-    document.getElementById('user-avatar').src = '';
-    document.getElementById('user-avatar').style.display = 'none';
-  }
-  document.getElementById('user-name').textContent = user.name.split(' ')[0];
-  document.getElementById('user-badge').style.display = 'flex';
-  document.getElementById('user-email-display').textContent = user.email;
-
-  if (user.accessToken) {
-    setDriveStatus('☁️ Drive מחובר', 'ok');
-    document.getElementById('drive-status').style.display = 'inline-block';
-    initDriveFolders();
-  } else {
-    setDriveStatus('💾 מקומי', 'ok');
-    document.getElementById('drive-status').style.display = 'inline-block';
-  }
-}
-
-function signOut() {
-  clearInterval(window._tokenRefreshTimer);
-  localStorage.removeItem('seker_user_email');
-  if (window.gUser?.accessToken) {
-    try { google.accounts.oauth2.revoke(window.gUser.accessToken, () => {}); } catch(e) {}
-  }
-  try { google.accounts.id.disableAutoSelect(); } catch(e) {}
-  window.gUser = null;
-  _tokenClient = null;
-  closeUserMenu();
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('user-badge').style.display = 'none';
-  document.getElementById('drive-status').style.display = 'none';
-  document.getElementById('project-bar').classList.add('hidden');
-  document.getElementById('main').style.top = '';
-  setTimeout(_initAuth, 200);
-}
-
-function toggleUserMenu() {
-  document.getElementById('user-menu').classList.toggle('hidden');
-}
-function closeUserMenu() {
-  document.getElementById('user-menu').classList.add('hidden');
-}
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('#user-badge') && !e.target.closest('#user-menu')) {
-    closeUserMenu();
-  }
-});
-
-function setDriveStatus(text, cls) {
-  const el = document.getElementById('drive-status');
-  el.textContent = text;
-  el.className = cls;
-}
-
-// ── Google Drive API helpers ───────────────────────────────────
-
-function driveHeaders(withContentType = true) {
-  const h = { 'Authorization': 'Bearer ' + window.gUser.accessToken };
-  if (withContentType) h['Content-Type'] = 'application/json';
-  return h;
-}
-
-async function driveRequest(url, opts = {}) {
-  if (!window.gUser || !window.gUser.accessToken) return null;
-  try {
-    const isWrite = opts.method && opts.method !== 'GET';
-    const res = await fetch(url, {
-      headers: driveHeaders(isWrite),
-      ...opts
-    });
-    if (!res.ok) throw new Error('Drive API ' + res.status + ' ' + url);
-    if (res.status === 204 || res.headers.get('content-length') === '0') return {};
-    const text = await res.text();
-    return text ? JSON.parse(text) : {};
-  } catch(e) {
-    console.error('Drive error:', e);
-    return null;
-  }
-}
-
-async function findFolder(name, parentId) {
-  const q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false` +
-            (parentId ? ` and '${parentId}' in parents` : '');
-  const res = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`
-  );
-  return res && res.files && res.files[0] ? res.files[0].id : null;
-}
-
-async function createFolder(name, parentId) {
-  const meta = { name, mimeType: 'application/vnd.google-apps.folder' };
-  if (parentId) meta.parents = [parentId];
-  const res = await driveRequest('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    body: JSON.stringify(meta)
-  });
-  return res ? res.id : null;
-}
-
-async function getOrCreateFolder(name, parentId) {
-  let id = await findFolder(name, parentId);
-  if (!id) id = await createFolder(name, parentId);
-  return id;
-}
-
-// ── Init Drive folder structure ────────────────────────────────
-async function initDriveFolders() {
-  setDriveStatus('⏳ מחבר...', 'saving');
-  try {
-    driveFolderId = await getOrCreateFolder(DRIVE_ROOT_FOLDER, null);
-    setDriveStatus('☁️ Drive', 'ok');
-  } catch(e) {
-    console.error('initDriveFolders:', e);
-    setDriveStatus('⚠️ שגיאת Drive', 'error');
-    driveFolderId = null;
-  }
-}
-
-// ── Upload file to Drive ───────────────────────────────────────
-async function uploadFileToDrive(fileName, content, mimeType, folderId, existingFileId) {
-  if (!window.gUser || !window.gUser.accessToken) return null;
-  const boundary = '-------314159265358979323846';
-  const meta = JSON.stringify({
-    name: fileName,
-    ...(existingFileId ? {} : { parents: [folderId] })
-  });
-
-  // Build multipart body — supports both string and Blob/binary content
-  const metaPart = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`;
-  const endPart  = `\r\n--${boundary}--`;
-
-  let body;
-  if (content instanceof Blob || content instanceof ArrayBuffer || content instanceof Uint8Array) {
-    // Binary: use ArrayBuffer concatenation
-    const enc = new TextEncoder();
-    const startBytes = enc.encode(metaPart);
-    const endBytes   = enc.encode(endPart);
-    const contentBytes = content instanceof Blob ? new Uint8Array(await content.arrayBuffer())
-                       : content instanceof ArrayBuffer ? new Uint8Array(content)
-                       : content;
-    const merged = new Uint8Array(startBytes.length + contentBytes.length + endBytes.length);
-    merged.set(startBytes, 0);
-    merged.set(contentBytes, startBytes.length);
-    merged.set(endBytes, startBytes.length + contentBytes.length);
-    body = merged.buffer;
-  } else {
-    // String content (JSON etc.)
-    body = metaPart + content + endPart;
-  }
-
-  const url = existingFileId
-    ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`
-    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
-
-  try {
-    const res = await fetch(url, {
-      method: existingFileId ? 'PATCH' : 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + window.gUser.accessToken,
-        'Content-Type': `multipart/related; boundary="${boundary}"`
-      },
-      body
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    return data.id;
-  } catch(e) {
-    console.error('Upload error:', e);
-    return null;
-  }
-}
-
-// Upload binary (for images)
-async function uploadBinaryToDrive(fileName, arrayBuffer, mimeType, folderId) {
-  if (!window.gUser || !window.gUser.accessToken) return null;
-  const boundary = '-------271828182845904523536';
-  const meta = JSON.stringify({ name: fileName, parents: [folderId] });
-  // Build multipart body manually
-  const enc = new TextEncoder();
-  const part1 = enc.encode(`--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`);
-  const part2 = enc.encode(`\r\n--${boundary}--`);
-  const combined = new Uint8Array(part1.length + arrayBuffer.byteLength + part2.length);
-  combined.set(part1, 0);
-  combined.set(new Uint8Array(arrayBuffer), part1.length);
-  combined.set(part2, part1.length + arrayBuffer.byteLength);
-
-  try {
-    const res = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + window.gUser.accessToken,
-          'Content-Type': `multipart/related; boundary="${boundary}"`
-        },
-        body: combined
-      }
-    );
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    return data.id;
-  } catch(e) {
-    console.error('Binary upload error:', e);
-    return null;
-  }
-}
-
-// ── PROJECT MODAL ──────────────────────────────────────────────
-function openProjModal() {
-  document.getElementById('proj-modal').classList.remove('hidden');
-  loadProjectList();
-  // Show Drive info if signed in
-  const banner = document.getElementById('drive-info-banner');
-  const link   = document.getElementById('drive-folder-link');
-  const driveActions = document.getElementById('drive-file-actions');
-  if (window.gUser && projectFolderId) {
-    banner.style.display = 'block';
-    link.href = `https://drive.google.com/drive/folders/${projectFolderId}`;
-    link.textContent = `🔗 פתח תיקיית "${currentProjectName || 'פרויקט'}" ב-Drive ↗`;
-    link.style.display = 'inline-block';
-    if (driveActions) driveActions.style.display = 'block';
-  } else if (window.gUser) {
-    banner.style.display = 'block';
-    link.style.display = 'none';
-    if (driveActions) driveActions.style.display = 'none';
-  } else {
-    banner.style.display = 'none';
-    if (driveActions) driveActions.style.display = 'none';
-  }
-}
-function closeProjModal() {
-  document.getElementById('proj-modal').classList.add('hidden');
-}
-
-// Show project bar
-function showProjectBar(name) {
-  document.getElementById('project-name-display').textContent = '📁 ' + name;
-  document.getElementById('project-bar').classList.remove('hidden');
-  document.getElementById('main').style.top = '88px';
-  // Show Drive link if folder is known
-  const driveLink = document.getElementById('proj-drive-link');
-  if (driveLink) {
-    if (projectFolderId) {
-      driveLink.href = `https://drive.google.com/drive/folders/${projectFolderId}`;
-      driveLink.style.display = 'inline-block';
-    } else {
-      driveLink.style.display = 'none';
-    }
-  }
-  setTimeout(() => { if (window.map) map.invalidateSize(true); }, 150);
-}
-
-// ── Load project list ──────────────────────────────────────────
-async function loadProjectList() {
-  const container = document.getElementById('proj-list-container');
-  container.innerHTML = '<div class="proj-empty">⏳ טוען פרויקטים...</div>';
-
-  let driveProjects = [];
-  let localProjects = getFromLocalStorage();
-
-  // Load from Drive if connected
-  if (window.gUser && window.gUser.accessToken && driveFolderId) {
-    try {
-      const q = `'${driveFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-      const res = await driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime+desc`
-      );
-      if (res && res.files) {
-        driveProjects = res.files
-          .filter(f => f.name !== 'תמונות') // סנן תיקיית תמונות
-          .map(f => ({
-            id: f.id,
-            name: f.name,
-            updated: f.modifiedTime,
-            fromDrive: true
-          }));
-      }
-    } catch(e) { console.warn('Drive list failed:', e); }
-  }
-
-  // Merge: Drive projects first, then local-only that have valid trees data
-  const driveIds = new Set(driveProjects.map(p => p.id));
-  const driveNames = new Set(driveProjects.map(p => p.name));
-  const localOnly = localProjects.filter(p =>
-    !driveIds.has(p.id) &&
-    !driveNames.has(p.name) && // אל תכפיל פרויקט שכבר ב-Drive לפי שם
-    p.id && p.name && p.name.trim().length > 1 // סנן פרויקטים בלי שם תקין
-  );
-  const projects = [...driveProjects, ...localOnly];
-
-  if (!projects.length) {
-    container.innerHTML = '<div class="proj-empty">אין פרויקטים עדיין.<br>צור פרויקט חדש למעלה 👆</div>';
-    return;
-  }
-
-  container.innerHTML = projects.map(p => `
-    <div class="proj-item ${p.id===currentProjectId?'active':''}"
-         onclick="loadProjectFromList('${p.id}','${escHtml(p.name)}',${!!p.fromDrive})">
-      <span class="proj-item-icon">📁</span>
-      <div class="proj-item-info">
-        <div class="proj-item-name">${escHtml(p.name)}</div>
-        <div class="proj-item-meta">${p.fromDrive?'☁️ Drive':'💾 מקומי'} • ${formatDate(p.updated)}</div>
-      </div>
-      <button class="proj-item-del" onclick="deleteProject(event,'${p.id}','${escHtml(p.name)}',${!!p.fromDrive})">🗑️</button>
-    </div>
-  `).join('');
-}
-
-// ── Create project ─────────────────────────────────────────────
-async function createProject() {
-  const inp = document.getElementById('proj-name-input');
-  const name = inp.value.trim();
-  if (!name) { toast('⚠️ הכנס שם פרויקט'); return; }
-
-  setDriveStatus('⏳ יוצר...', 'saving');
-  let id, fromDrive = false;
-
-  // Create Drive folder
-  if (window.gUser && window.gUser.accessToken && driveFolderId) {
-    try {
-      id = await createFolder(name, driveFolderId);
-      if (id) {
-        fromDrive = true;
-        // Create empty trees.json inside
-        await uploadFileToDrive('trees.json', JSON.stringify({}), 'application/json', id, null);
-      }
-    } catch(e) { console.warn('Drive create failed:', e); }
-  }
-
-  if (!id) id = 'proj_' + Date.now();
-
-  const projData = { id, name, updated: new Date().toISOString(), trees: {}, dxfData: null };
-  saveToLocalStorage(id, projData);
-  setDriveStatus('☁️ Drive', 'ok');
-  inp.value = '';
-  loadProject(id, name, projData, fromDrive);
-  closeProjModal();
-  toast('✅ פרויקט "' + name + '" נוצר');
-}
-
-// ── Load project from list ─────────────────────────────────────
-async function loadProjectFromList(id, name, fromDrive) {
-  let data = null;
-
-  if (fromDrive && window.gUser && window.gUser.accessToken) {
-    setDriveStatus('⏳ טוען...', 'saving');
-    try {
-      // Find trees.json in project folder
-      const q = `'${id}' in parents and name='trees.json' and trashed=false`;
-      const res = await driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`
-      );
-      if (res && res.files && res.files[0]) {
-        const fileId = res.files[0].id;
-        const raw = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-          { headers: { 'Authorization': 'Bearer ' + window.gUser.accessToken } }
-        );
-        const treesData = await raw.json();
-        // treesData may be {trees, dxfOffset} (new format) or plain dict (old format)
-        const treesObj = treesData.trees || treesData;
-        const dxfOffset = treesData.dxfOffset || { lat: 0, lng: 0 };
-
-        // Find dxf.json
-        const q2 = `'${id}' in parents and name='dxf.json' and trashed=false`;
-        const res2 = await driveRequest(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q2)}&fields=files(id)`
-        );
-        let dxfData = null;
-        if (res2 && res2.files && res2.files[0]) {
-          const dxfRaw = await fetch(
-            `https://www.googleapis.com/drive/v3/files/${res2.files[0].id}?alt=media`,
-            { headers: { 'Authorization': 'Bearer ' + window.gUser.accessToken } }
-          );
-          dxfData = await dxfRaw.text();
-        }
-
-        data = { id, name, trees: treesObj, dxfData, dxfOffset };
-      }
-      setDriveStatus('☁️ Drive', 'ok');
-    } catch(e) {
-      console.error('Load from Drive failed:', e);
-      setDriveStatus('⚠️ שגיאה', 'error');
-    }
-  }
-
-  if (!data) data = getFromLocalStorage().find(p => p.id === id);
-  if (!data) { toast('⚠️ לא ניתן לטעון פרויקט'); return; }
-
-  loadProject(id, name, data, fromDrive);
-  closeProjModal();
-}
-
-// ── Apply project data to map ──────────────────────────────────
-function loadProject(id, name, data, fromDrive) {
-  currentProjectId   = id;
-  currentProjectName = name;
-  projectFolderId    = fromDrive ? id : null;
-  projectMetaFileId  = null;
-  excelFileId        = null;
-  // Always close sidebar when switching projects
-  document.getElementById('sidebar').classList.add('hidden');
-  document.getElementById('map').style.pointerEvents = '';
-  currentTreeId = null;
-  showProjectBar(name);
-
-  // Clear map
-  Object.keys(markers).forEach(mid => { try { map.removeLayer(markers[mid]); } catch(e){} });
-  Object.keys(labelLayers).forEach(mid => { try { map.removeLayer(labelLayers[mid]); } catch(e){} });
-  trees = {}; markers = {}; labelLayers = {}; labelMarkers = {};
-
-  // Load trees
-  const treesArr = Array.isArray(data.trees) ? data.trees : Object.values(data.trees || {});
-  treesArr.forEach(tree => { trees[tree.id] = tree; addMarker(tree); });
-
-  // Load DXF
-  if (data.dxfData) {
-    try {
-      _dxfParsed = typeof data.dxfData === 'string' ? JSON.parse(data.dxfData) : data.dxfData;
-      // Restore saved offset
-      const off = data.dxfOffset || { lat: 0, lng: 0 };
-      _dxfOffsetLat = off.lat || 0;
-      _dxfOffsetLng = off.lng || 0;
-      // Update sliders if modal is open
-      const latEl = document.getElementById('dxf-offset-lat');
-      const lngEl = document.getElementById('dxf-offset-lng');
-      if (latEl) { latEl.value = _dxfOffsetLat; document.getElementById('dxf-offset-lat-val').textContent = Math.round(_dxfOffsetLat) + 'מ׳'; }
-      if (lngEl) { lngEl.value = _dxfOffsetLng; document.getElementById('dxf-offset-lng-val').textContent = Math.round(_dxfOffsetLng) + 'מ׳'; }
-      const vis = new Set(Object.keys(_dxfParsed.layers || {}));
-      renderDxfOverlay(_dxfParsed, vis, _dxfOffsetLat, _dxfOffsetLng, false);
-    } catch(e) { console.warn('DXF load error:', e); }
-  }
-
-  updateListPanel();
-  const arr = Object.values(trees);
-  if (arr.length) {
-    const lats = arr.map(t=>t.lat), lngs = arr.map(t=>t.lng);
-    map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[50,50]});
-  }
-  toast('📂 "' + name + '" — ' + arr.length + ' עצים');
-}
-
-// ── Save project to Drive ──────────────────────────────────────
-async function saveProject() {
-  if (!currentProjectId) return;
-  if (_driveSaving) return;
-  _driveSaving = true;
-  setDriveStatus('💾 שומר...', 'saving');
-
-  const treesPayload = { trees, dxfOffset: { lat: _dxfOffsetLat, lng: _dxfOffsetLng } };
-  const treesJson = JSON.stringify(treesPayload, null, 2);
-
-  try {
-    // If Drive is connected but project has no Drive folder yet — migrate it
-    if (!projectFolderId && window.gUser && window.gUser.accessToken && driveFolderId) {
-      try {
-        // Check if a folder with this name already exists in Drive
-        let folderId = await findFolder(currentProjectName, driveFolderId);
-        if (!folderId) {
-          folderId = await createFolder(currentProjectName, driveFolderId);
-        }
-        if (folderId) {
-          projectFolderId = folderId;
-          projectMetaFileId = null;
-          toast('☁️ פרויקט מועלה ל-Drive...');
-        }
-      } catch(e) { console.warn('Migration to Drive failed:', e); }
-    }
-
-    if (projectFolderId && window.gUser && window.gUser.accessToken) {
-      // ── Save trees.json ──
-      if (!projectMetaFileId) {
-        const q = `'${projectFolderId}' in parents and name='trees.json' and trashed=false`;
-        const res = await driveRequest(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`
-        );
-        projectMetaFileId = (res && res.files && res.files[0]) ? res.files[0].id : null;
-      }
-      projectMetaFileId = await uploadFileToDrive(
-        'trees.json', treesJson, 'application/json',
-        projectFolderId, projectMetaFileId
-      );
-
-      // ── Save DXF if exists ──
-      if (_dxfParsed) {
-        const dxfJson = JSON.stringify(_dxfParsed);
-        const q2 = `'${projectFolderId}' in parents and name='dxf.json' and trashed=false`;
-        const res2 = await driveRequest(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q2)}&fields=files(id)`
-        );
-        const dxfFileId = (res2 && res2.files && res2.files[0]) ? res2.files[0].id : null;
-        await uploadFileToDrive('dxf.json', dxfJson, 'application/json', projectFolderId, dxfFileId);
-      }
-
-      // ── Save Excel ──
-      await saveExcelToDrive();
-
-      // Update project bar to show Drive link
-      const driveLink = document.getElementById('proj-drive-link');
-      if (driveLink) {
-        driveLink.href = `https://drive.google.com/drive/folders/${projectFolderId}`;
-        driveLink.style.display = 'inline-block';
-      }
-
-      window._lastSaveTime = Date.now();
-      setDriveStatus('☁️ נשמר ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}), 'ok');
-    } else {
-      // localStorage fallback
-      saveToLocalStorage(currentProjectId, {
-        id: currentProjectId, name: currentProjectName,
-        updated: new Date().toISOString(), trees,
-        dxfData: _dxfParsed ? JSON.stringify(_dxfParsed) : null,
-        dxfOffset: { lat: _dxfOffsetLat, lng: _dxfOffsetLng }
-      });
-      setDriveStatus('💾 נשמר', 'ok');
-    }
-  } catch(e) {
-    console.error('Save failed:', e);
-    setDriveStatus('⚠️ שגיאת שמירה', 'error');
-  } finally {
-    _driveSaving = false;
-  }
-}
-
-// ── Save Excel to Drive ────────────────────────────────────────
-async function saveExcelToDrive() {
-  if (!projectFolderId || !window.gUser || !window.gUser.accessToken) return;
-  if (!window.XLSX) return;
-  try {
-    const wb = buildWorkbook();
-    const arrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-
-    if (!excelFileId) {
-      const q = `'${projectFolderId}' in parents and name='${currentProjectName}.xlsx' and trashed=false`;
-      const res = await driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`
-      );
-      excelFileId = (res && res.files && res.files[0]) ? res.files[0].id : null;
-    }
-
-    // Update existing or upload new
-    const boundary = '-------271828182845904523536';
-    const meta = JSON.stringify({
-      name: currentProjectName + '.xlsx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ...(excelFileId ? {} : { parents: [projectFolderId] })
-    });
-    const enc = new TextEncoder();
-    const part1 = enc.encode(`--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n`);
-    const part2 = enc.encode(`\r\n--${boundary}--`);
-    const combined = new Uint8Array(part1.length + arrayBuffer.length + part2.length);
-    combined.set(part1); combined.set(new Uint8Array(arrayBuffer), part1.length); combined.set(part2, part1.length + arrayBuffer.length);
-
-    const url = excelFileId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${excelFileId}?uploadType=multipart`
-      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
-
-    const res2 = await fetch(url, {
-      method: excelFileId ? 'PATCH' : 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + window.gUser.accessToken,
-        'Content-Type': `multipart/related; boundary="${boundary}"`
-      },
-      body: combined
-    });
-    if (res2.ok) {
-      const d = await res2.json();
-      excelFileId = d.id;
-    }
-  } catch(e) { console.error('Excel Drive save failed:', e); }
-}
-
-// ── Upload photo to Drive ──────────────────────────────────────
-async function uploadPhotoToDrive(treeNumber, dataUrl) {
-  if (!projectFolderId || !window.gUser || !window.gUser.accessToken) return;
-  try {
-    // Convert dataUrl to ArrayBuffer
-    const base64 = dataUrl.split(',')[1];
-    const binary = atob(base64);
-    const buf = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
-
-    const fileName = `עץ_${treeNumber}.jpg`;
-    await uploadBinaryToDrive(fileName, buf.buffer, 'image/jpeg', projectFolderId);
-  } catch(e) { console.error('Photo upload failed:', e); }
-}
-
-// ── Load CSV from Drive ────────────────────────────────────────
-async function loadCsvFromDrive() {
-  if (!projectFolderId || !window.gUser?.accessToken) { toast('⚠️ יש לפתוח פרויקט Drive תחילה'); return; }
-  setDriveStatus('⏳ מחפש CSV...', 'saving');
-  try {
-    const q = `'${projectFolderId}' in parents and (name contains '.csv' or name contains '.CSV') and trashed=false`;
-    const res = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime+desc`);
-    setDriveStatus('☁️ Drive', 'ok');
-    if (!res?.files?.length) { toast('⚠️ לא נמצאו קבצי CSV בתיקיית הפרויקט'); return; }
-    if (res.files.length === 1) { await _downloadAndImportCsv(res.files[0]); }
-    else { _showDriveFilePicker(res.files, 'CSV', _downloadAndImportCsv); }
-  } catch(e) { setDriveStatus('⚠️ שגיאה', 'error'); toast('⚠️ שגיאה בטעינת CSV'); }
-}
-
-async function _downloadAndImportCsv(file) {
-  closeProjModal();
-  setDriveStatus('⏳ מוריד...', 'saving');
-  try {
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-      { headers: { 'Authorization': 'Bearer ' + window.gUser.accessToken } });
-    const text = await res.text();
-    setDriveStatus('☁️ Drive', 'ok');
-    _importCsvText(text, file.name);
-  } catch(e) { setDriveStatus('⚠️ שגיאה', 'error'); toast('⚠️ שגיאה בהורדת CSV'); }
-}
-
-// ── Load DXF from Drive ────────────────────────────────────────
-async function loadDxfFromDrive() {
-  if (!projectFolderId || !window.gUser?.accessToken) { toast('⚠️ יש לפתוח פרויקט Drive תחילה'); return; }
-  setDriveStatus('⏳ מחפש DXF...', 'saving');
-  try {
-    const q = `'${projectFolderId}' in parents and (name contains '.dxf' or name contains '.DXF') and trashed=false`;
-    const res = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime+desc`);
-    setDriveStatus('☁️ Drive', 'ok');
-    if (!res?.files?.length) { toast('⚠️ לא נמצאו קבצי DXF בתיקיית הפרויקט'); return; }
-    if (res.files.length === 1) { await _downloadAndLoadDxf(res.files[0]); }
-    else { _showDriveFilePicker(res.files, 'DXF', _downloadAndLoadDxf); }
-  } catch(e) { setDriveStatus('⚠️ שגיאה', 'error'); toast('⚠️ שגיאה בטעינת DXF'); }
-}
-
-async function _downloadAndLoadDxf(file) {
-  closeProjModal();
-  toast('⏳ מוריד שרטוט מ-Drive...');
-  setDriveStatus('⏳ מוריד DXF...', 'saving');
-  try {
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-      { headers: { 'Authorization': 'Bearer ' + window.gUser.accessToken } });
-    const text = await res.text();
-    setDriveStatus('☁️ Drive', 'ok');
-    const blob = new Blob([text], { type: 'text/plain' });
-    const fakeFile = new File([blob], file.name, { type: 'text/plain' });
-    openDxfModal();
-    loadDxfFile(fakeFile);
-  } catch(e) { setDriveStatus('⚠️ שגיאה', 'error'); toast('⚠️ שגיאה בהורדת DXF'); }
-}
-
-// ── Drive file picker ──────────────────────────────────────────
-function _showDriveFilePicker(files, type, callback) {
-  const old = document.getElementById('_drive-picker'); if (old) old.remove();
-  const div = document.createElement('div');
-  div.id = '_drive-picker';
-  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;display:flex;align-items:center;justify-content:center';
-  div.innerHTML = `<div style="background:white;border-radius:16px;padding:24px;max-width:400px;width:90%;direction:rtl;box-shadow:0 8px 40px rgba(0,0,0,0.3)">
-    <h3 style="margin:0 0 14px;font-size:16px;color:#1a4d2e">📂 בחר קובץ ${type}</h3>
-    ${files.map((f,i)=>`<div onclick="_pickerSelect(${i})" style="padding:11px 14px;border:1.5px solid #e0e0e0;border-radius:9px;margin-bottom:7px;cursor:pointer" onmouseover="this.style.background='#e8f5ee'" onmouseout="this.style.background='white'">
-      <div style="font-weight:700;font-size:13px">${f.name}</div>
-      <div style="font-size:11px;color:#888;margin-top:2px">עודכן: ${new Date(f.modifiedTime).toLocaleDateString('he-IL')}</div>
-    </div>`).join('')}
-    <button onclick="document.getElementById('_drive-picker').remove()" style="width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer;font-size:13px;font-family:inherit">ביטול</button>
-  </div>`;
-  document.body.appendChild(div);
-  window._dpFiles = files; window._dpCb = callback;
-  div.addEventListener('click', e => { if (e.target===div) div.remove(); });
-}
-function _pickerSelect(i) {
-  const f = window._dpFiles[i], cb = window._dpCb;
-  const el = document.getElementById('_drive-picker'); if (el) el.remove();
-  if (f && cb) cb(f);
-}
-
-// ── Delete project ─────────────────────────────────────────────
-async function deleteProject(e, id, name, fromDrive) {
-  e.stopPropagation();
-  if (!confirm('למחוק את הפרויקט "' + name + '"?')) return;
-  if (fromDrive && window.gUser && window.gUser.accessToken) {
-    try {
-      await driveRequest(`https://www.googleapis.com/drive/v3/files/${id}`, { method: 'DELETE' });
-    } catch(ex) { console.warn('Drive delete failed:', ex); }
-  }
-  deleteFromLocalStorage(id);
-  if (currentProjectId === id) {
-    currentProjectId = null; currentProjectName = null; projectFolderId = null;
-    document.getElementById('project-bar').classList.add('hidden');
-    document.getElementById('main').style.top = '';
-  }
-  toast('🗑️ פרויקט נמחק');
-  loadProjectList();
-}
-
-// Auto-save every 60s
-setInterval(() => { if (currentProjectId) saveProject(); }, 60000);
-
-// ── localStorage helpers ───────────────────────────────────────
-function saveToLocalStorage(id, data) {
-  try {
-    const light = JSON.parse(JSON.stringify(data));
-    Object.values(light.trees || {}).forEach(t => { t.photos = []; });
-    localStorage.setItem('seker_proj_' + id, JSON.stringify(light));
-    let idx = JSON.parse(localStorage.getItem('seker_proj_index') || '[]');
-    if (!idx.includes(id)) idx.push(id);
-    localStorage.setItem('seker_proj_index', JSON.stringify(idx));
-  } catch(e) { console.warn('LS save:', e); }
-}
-function getFromLocalStorage() {
-  try {
-    return JSON.parse(localStorage.getItem('seker_proj_index') || '[]')
-      .map(id => { const r = localStorage.getItem('seker_proj_' + id); return r ? JSON.parse(r) : null; })
-      .filter(Boolean);
-  } catch(e) { return []; }
-}
-function deleteFromLocalStorage(id) {
-  try {
-    localStorage.removeItem('seker_proj_' + id);
-    let idx = JSON.parse(localStorage.getItem('seker_proj_index') || '[]');
-    localStorage.setItem('seker_proj_index', JSON.stringify(idx.filter(i=>i!==id)));
-  } catch(e) {}
-}
-
-// ── Utils ──────────────────────────────────────────────────────
-function escHtml(s) {
-  return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function formatDate(iso) {
-  try { return new Date(iso).toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
-  catch(e) { return ''; }
-}
-
-// ── Hook: auto-save after any tree edit ───────────────────────
-const _origSaveCurrentTree = saveCurrentTree;
-saveCurrentTree = function() {
-  _origSaveCurrentTree();
-  if (currentProjectId) {
-    clearTimeout(_autoSaveTimer);
-    _autoSaveTimer = setTimeout(saveProject, 4000);
-  }
-};
-
-// ── Hook: upload photo to Drive when photo is added ───────────
-const _origHandlePhoto = handlePhoto;
-handlePhoto = async function(event) {
-  await _origHandlePhoto(event);
-  if (currentProjectId && projectFolderId && currentTreeId) {
-    const tree = trees[currentTreeId];
-    if (tree && tree.photos && tree.photos.length) {
-      const latestPhoto = tree.photos[tree.photos.length - 1];
-      await uploadPhotoToDrive(tree.number, latestPhoto);
-    }
-  }
-};
-
-
-// ── DXF offset vars ────────────────────────────────────────────
-let _dxfOffsetLat = 0;
-let _dxfOffsetLng = 0;
-let _dxfDragMode = false;
-let _dxfDragStart = null;
-let _dxfDragBaseOffsetLat = 0;
-let _dxfDragBaseOffsetLng = 0;
-
-// ── Get selected CRS ────────────────────────────────────────────
-function getDxfCrs() {
-  const sel = document.querySelector('input[name="dxf-crs"]:checked');
-  return sel ? sel.value : 'itm';
-}
-
-// ── Israeli Old Grid (Palestine Belt / CIG) → WGS84 ─────────────
-// EPSG:28193 (Palestine Belt) approximate params
-function cigToWgs84(E, N) {
-  // Cassini-Soldner on Clarke 1880 Modified
-  // Approximate Helmert transformation from Palestinian grid to WGS84
-  // Parameters from Israeli Survey Authority
-  const a = 6378300.789; const f = 1/293.4663; const b = a*(1-f);
-  const e2 = (a*a - b*b)/(a*a);
-  const lon0 = (35 + 12/60 + 43.490/3600)*Math.PI/180; // 35°12'43.490"
-  const lat0 = (31 + 44/60 + 2.749/3600)*Math.PI/180;  // 31°44'02.749"
-  const FE = 170251.555; const FN = 1126867.909;
-  const N2 = N - FN; const E2 = E - FE;
-  // Cassini-Soldner inverse (simplified)
-  const M0 = lat0 * (a*(1 - e2/4 - 3*e2*e2/64));
-  const M1 = M0 + N2;
-  const mu = M1 / (a*(1 - e2/4 - 3*e2*e2/64));
-  const e1 = (1 - Math.sqrt(1-e2))/(1 + Math.sqrt(1-e2));
-  const fp = mu + (3*e1/2)*Math.sin(2*mu) + (21*e1*e1/16)*Math.sin(4*mu);
-  const sf = Math.sin(fp); const cf = Math.cos(fp);
-  const N1 = a/Math.sqrt(1-e2*sf*sf);
-  const R1 = a*(1-e2)/Math.pow(1-e2*sf*sf, 1.5);
-  const T1 = Math.tan(fp)*Math.tan(fp);
-  const D = E2/(N1);
-  const lat = fp - (N1*Math.tan(fp)/R1)*(D*D/2 - (1+3*T1)*D*D*D*D/12);
-  const lon = lon0 + (D - (1+2*T1)*D*D*D/6)/Math.cos(fp);
-  // Apply Helmert 7-param shift from Palestine to WGS84 (approximate)
-  // Typical values for Israel: ΔX≈+84m, ΔY≈+96m, ΔZ≈+116m but we simplify
-  return [lat*180/Math.PI, lon*180/Math.PI];
-}
-
-// ── Multi-CRS conversion ────────────────────────────────────────
-function toWgs84WithCrs(x, y, crs) {
-  if (!crs || crs === 'itm') return toWgs84(x, y);
-  if (crs === 'wgs') {
-    if (x>33&&x<37&&y>28&&y<34) return [y,x]; // lon,lat
-    if (y>33&&y<37&&x>28&&x<34) return [x,y]; // lat,lon
-    return null;
-  }
-  if (crs === 'ig') {
-    // Old Israeli Grid - similar range to ITM
-    // Check if coords look like old grid
-    if (x>80000&&x<320000&&y>340000&&y<960000) return cigToWgs84(x,y);
-    if (y>80000&&y<320000&&x>340000&&x<960000) return cigToWgs84(y,x);
-    return null;
-  }
-  return toWgs84(x, y);
-}
-
-function resetDxfOffset() {
-  _dxfOffsetLat = 0; _dxfOffsetLng = 0;
-  document.getElementById('dxf-offset-lat').value = 0;
-  document.getElementById('dxf-offset-lng').value = 0;
-  document.getElementById('dxf-offset-lat-val').textContent = '0מ׳';
-  document.getElementById('dxf-offset-lng-val').textContent = '0מ׳';
-  applyDxfLayersLive();
-}
-
-function saveDxfOffset() {
-  if (!currentProjectId) { toast('⚠️ אין פרויקט פתוח'); return; }
-  // Save offset into project and trigger full save
-  clearTimeout(_autoSaveTimer);
-  saveProject().then(() => toast('✅ מיקום המדידה נשמר'));
-}
-
-function applyDxfLayersLive() {
-  if (!_dxfParsed) return;
-  _dxfOffsetLat = parseFloat(document.getElementById('dxf-offset-lat').value)||0;
-  _dxfOffsetLng = parseFloat(document.getElementById('dxf-offset-lng').value)||0;
-  const checked = document.querySelectorAll('#dxf-layer-list input:checked');
-  const vis = new Set(Array.from(checked).map(c=>c.value));
-  renderDxfOverlay(_dxfParsed, vis, _dxfOffsetLat, _dxfOffsetLng, true); // skipFit=true
-}
-
-// ── Drag mode for DXF alignment ─────────────────────────────────
-function enableDxfDrag() {
-  if (_dxfDragMode) {
-    disableDxfDrag(); return;
-  }
-  _dxfDragMode = true;
-  _dxfDragBaseOffsetLat = _dxfOffsetLat;
-  _dxfDragBaseOffsetLng = _dxfOffsetLng;
-  const btn = document.getElementById('btn-drag-dxf');
-  if (btn) { btn.style.background='#e3f2fd'; btn.textContent='🛑 עצור גרירה'; }
-  map.dragging.disable();
-  map.getContainer().style.cursor = 'grab';
-  closeDxfModal();
-  toast('🖐 לחץ וגרור לכיוון השרטוט — לחץ ESC לסיום');
-  map.on('mousedown', _dxfDragStart2);
-}
-
-function disableDxfDrag() {
-  _dxfDragMode = false;
-  map.dragging.enable();
-  map.getContainer().style.cursor = '';
-  map.off('mousedown', _dxfDragStart2);
-  map.off('mousemove', _dxfDragMove);
-  map.off('mouseup', _dxfDragEnd);
-  const btn = document.getElementById('btn-drag-dxf');
-  if (btn) { btn.style.background='white'; btn.textContent='🖐 מצב גרירת שרטוט'; }
-}
-
-function _dxfDragStart2(e) {
-  _dxfDragStart = e.latlng;
-  _dxfDragBaseOffsetLat = _dxfOffsetLat;
-  _dxfDragBaseOffsetLng = _dxfOffsetLng;
-  map.getContainer().style.cursor = 'grabbing';
-  map.on('mousemove', _dxfDragMove);
-  map.on('mouseup', _dxfDragEnd);
-}
-
-function _dxfDragMove(e) {
-  if (!_dxfDragStart) return;
-  // Delta in degrees → convert to meters
-  const dLat = (e.latlng.lat - _dxfDragStart.lat) * 111111;
-  const dLng = (e.latlng.lng - _dxfDragStart.lng) * (111111 * Math.cos(e.latlng.lat * Math.PI/180));
-  _dxfOffsetLat = _dxfDragBaseOffsetLat - dLat;
-  _dxfOffsetLng = _dxfDragBaseOffsetLng - dLng;
-  // Update sliders if within range
-  if (Math.abs(_dxfOffsetLat) <= 500) {
-    const el = document.getElementById('dxf-offset-lat');
-    if(el){ el.value = Math.round(_dxfOffsetLat); document.getElementById('dxf-offset-lat-val').textContent = Math.round(_dxfOffsetLat)+'מ׳'; }
-  }
-  if (Math.abs(_dxfOffsetLng) <= 500) {
-    const el = document.getElementById('dxf-offset-lng');
-    if(el){ el.value = Math.round(_dxfOffsetLng); document.getElementById('dxf-offset-lng-val').textContent = Math.round(_dxfOffsetLng)+'מ׳'; }
-  }
-  const checked = document.querySelectorAll('#dxf-layer-list input:checked');
-  const vis = new Set(Array.from(checked).map(c=>c.value));
-  renderDxfOverlay(_dxfParsed, vis, _dxfOffsetLat, _dxfOffsetLng, true); // skipFit=true - never zoom during drag
-}
-
-function _dxfDragEnd(e) {
-  _dxfDragStart = null;
-  map.getContainer().style.cursor = 'grab';
-  map.off('mousemove', _dxfDragMove);
-  map.off('mouseup', _dxfDragEnd);
-  toast(`✅ הזזה: N ${Math.round(_dxfOffsetLat)}מ׳, E ${Math.round(_dxfOffsetLng)}מ׳`);
-}
-
-// ESC handled in combined listener above
-
-
-// ===========================
-// INIT
-// ===========================
-updateListPanel();
-
-window.addEventListener('load', function() {
-  // _initAuth is called by onGsiLoad when the GSI script finishes loading.
-  // This is a fallback if GSI never loads.
-  setTimeout(() => {
-    if (!_gsiLoaded) {
-      console.warn('GSI load timeout — showing offline fallback');
-      document.getElementById('no-client-warning').style.display = 'block';
-    }
-  }, 7000);
-});
-
-function fixMapSize() {
-  const el = document.getElementById('map');
-  if (el && el.offsetHeight > 0) { map.invalidateSize(true); }
-}
-[50, 100, 300, 600, 1200, 2500].forEach(t => setTimeout(fixMapSize, t));
-window.addEventListener('resize', fixMapSize);
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden) {
-    setTimeout(fixMapSize, 100);
-    // Auto-reload current project from Drive when returning to app
-    if (currentProjectId && projectFolderId && window.gUser && window.gUser.accessToken) {
-      clearTimeout(window._syncTimer);
-      window._syncTimer = setTimeout(async () => {
-        try {
-          const q = `'${projectFolderId}' in parents and name='trees.json' and trashed=false`;
-          const res = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,modifiedTime)`);
-          if (res && res.files && res.files[0]) {
-            const remoteTime = new Date(res.files[0].modifiedTime).getTime();
-            const localSaved = window._lastSaveTime || 0;
-            if (remoteTime > localSaved + 5000) { // remote is newer by 5+ sec
-              const raw = await fetch(`https://www.googleapis.com/drive/v3/files/${res.files[0].id}?alt=media`,
-                { headers: { 'Authorization': 'Bearer ' + window.gUser.accessToken } });
-              const treesData = await raw.json();
-              // Update trees without reloading DXF
-              Object.keys(markers).forEach(id => { try { map.removeLayer(markers[id]); } catch(e){} });
-              Object.keys(labelLayers).forEach(id => { try { map.removeLayer(labelLayers[id]); } catch(e){} });
-              trees = {}; markers = {}; labelLayers = {}; labelMarkers = {};
-              const arr = Array.isArray(treesData) ? treesData : Object.values(treesData || {});
-              arr.forEach(tree => { trees[tree.id] = tree; addMarker(tree); });
-              updateListPanel && updateListPanel();
-              window._lastSaveTime = remoteTime;
-              setDriveStatus('🔄 סונכרן ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}), 'ok');
-            }
-          }
-        } catch(e) { console.warn('Auto-sync failed:', e); }
-      }, 1500);
-    }
-  }
-});
-if (window.ResizeObserver) {
-  new ResizeObserver(fixMapSize).observe(document.getElementById('map'));
-}
-// Track save time for sync comparison
-const _origSaveProject = saveProject;
-saveProject = async function() {
-  window._lastSaveTime = Date.now();
-  return _origSaveProject.apply(this, arguments);
-};
-
-// ================================================================
-// GeoJSON EXPORT
-// ================================================================
-function exportGeoJSON() {
-  const treeArr = Object.values(trees);
-  if (treeArr.length === 0) { toast('אין עצים לייצוא'); return; }
-  const STATUS_MAP = { preserve:'שימור', relocate:'העתקה', cut:'כריתה', exempt:'לא נדרש ברישיון' };
-  const geojson = {
-    type: 'FeatureCollection',
-    features: treeArr.map(t => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [t.lng, t.lat]
-      },
-      properties: {
-        number: t.number || '',
-        type: t.type === '2' ? 'פוליגון' : 'עץ',
-        speciesName: t.speciesName || '',
-        speciesSci: t.speciesSci || '',
-        height: t.height || '',
-        qty: t.qty || 1,
-        diam1: t.diam1 || '', diam2: t.diam2 || '', diam3: t.diam3 || '',
-        health: t.health || '',
-        location: t.location || '',
-        canopy: t.canopy || '',
-        totalScore: t.totalScore !== null && t.totalScore !== undefined ? t.totalScore : '',
-        status: STATUS_MAP[t.status] || '',
-        notes: t.notes || '',
-        surveyed: t.surveyed ? 'כן' : 'לא',
-        gush: t.gush || '',
-        helka: t.helka || ''
-      }
-    }))
-  };
-  const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'סקר_עצים_' + new Date().toISOString().slice(0,10) + '.geojson';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('🗺️ GeoJSON יוצא (' + treeArr.length + ' עצים)');
-}
-
-// ================================================================
-// STATS DASHBOARD
-// ================================================================
-function showStatsModal() {
-  const treeArr = Object.values(trees);
-  if (treeArr.length === 0) { toast('אין עצים בפרויקט'); return; }
-
-  const STATUS_MAP = { preserve:'שימור', relocate:'העתקה', cut:'כריתה', exempt:'לא נדרש ברישיון', null:'—', undefined:'—', '':'—' };
-  const total = treeArr.reduce((s,t) => s + (parseInt(t.qty)||1), 0);
-  const surveyed = treeArr.filter(t => t.surveyed).length;
-
-  // By status
-  const byStatus = {};
-  treeArr.forEach(t => {
-    const k = STATUS_MAP[t.status] || '—';
-    byStatus[k] = (byStatus[k] || 0) + (parseInt(t.qty)||1);
-  });
-
-  // Top 5 species
-  const bySpecies = {};
-  treeArr.forEach(t => {
-    const k = t.speciesName || 'לא מזוהה';
-    bySpecies[k] = (bySpecies[k] || 0) + (parseInt(t.qty)||1);
-  });
-  const top5 = Object.entries(bySpecies).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  // Score distribution
-  const scored = treeArr.filter(t => t.totalScore !== null && t.totalScore !== undefined && t.totalScore !== '');
-  const avgScore = scored.length ? (scored.reduce((s,t)=>s+(parseInt(t.totalScore)||0),0)/scored.length).toFixed(1) : '—';
-
-  const bar = (val, max, color) => `<div style="height:10px;border-radius:5px;background:#eee;flex:1;overflow:hidden">
-    <div style="height:100%;width:${Math.round(val/max*100)}%;background:${color};border-radius:5px;transition:width 0.4s"></div></div>`;
-  const maxStatus = Math.max(...Object.values(byStatus), 1);
-  const STATUS_COLORS = {'שימור':'#27ae60','כריתה':'#e74c3c','העתקה':'#e67e22','לא נדרש ברישיון':'#95a5a6','—':'#bdc3c7'};
-
-  let html = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-      <div style="background:#f0fdf4;border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#1a4d2e">${total}</div>
-        <div style="font-size:12px;color:#555">סה"כ עצים</div>
-      </div>
-      <div style="background:#fef9e7;border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#b7950b">${surveyed}</div>
-        <div style="font-size:12px;color:#555">נסקרו</div>
-      </div>
-      <div style="background:#f3e5f5;border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#6c3483">${avgScore}</div>
-        <div style="font-size:12px;color:#555">ממוצע ניקוד</div>
-      </div>
-    </div>
-
-    <div style="font-weight:700;color:#1a4d2e;margin-bottom:10px;font-size:14px">📊 פילוח לפי סטטוס</div>`;
-
-  Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
-    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <span style="min-width:110px;font-size:13px;color:#333">${k}</span>
-      ${bar(v, maxStatus, STATUS_COLORS[k]||'#95a5a6')}
-      <span style="min-width:28px;text-align:left;font-size:13px;font-weight:600;color:#444">${v}</span>
-    </div>`;
-  });
-
-  html += `<div style="font-weight:700;color:#1a4d2e;margin:18px 0 10px;font-size:14px">🌿 5 מינים נפוצים</div>`;
-  const maxSp = top5[0]?.[1] || 1;
-  top5.forEach(([name, cnt], i) => {
-    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <span style="min-width:130px;font-size:12px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${i+1}. ${name}</span>
-      ${bar(cnt, maxSp, '#2980b9')}
-      <span style="min-width:28px;text-align:left;font-size:13px;font-weight:600;color:#444">${cnt}</span>
-    </div>`;
-  });
-
-  document.getElementById('stats-content').innerHTML = html;
-  document.getElementById('stats-modal').classList.remove('hidden');
-}
-function closeStatsModal() {
-  document.getElementById('stats-modal').classList.add('hidden');
-}
-
-// ================================================================
-// GUSH / HELKA LOOKUP (רמ"י API)
-// ================================================================
-async function fetchGushHelka() {
-  if (!currentTreeId) return;
-  const tree = trees[currentTreeId];
-  if (!tree || !tree.lat || !tree.lng) { toast('⚠️ אין קואורדינטות לעץ'); return; }
-  const itm = wgs84ToItm(tree.lat, tree.lng);
-  const x = itm.E.toFixed(2), y = itm.N.toFixed(2);
-  toast('🔍 מחפש גוש/חלקה...');
-  try {
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${tree.lng},${tree.lat}.json?access_token=skip`;
-    // Use Israel gov API (INSPIRE / ILA)
-    const apiUrl = `https://gis.iaa.gov.il/arcgis/rest/services/INSPIRE/IsraelCadastralParcels/MapServer/0/query?geometry=${x},${y}&geometryType=esriGeometryPoint&inSR=2039&spatialRel=esriSpatialRelIntersects&outFields=GUSH_NUM,PARCEL_NUM&f=json`;
-    const resp = await fetch(apiUrl);
-    const data = await resp.json();
-    if (data.features && data.features.length > 0) {
-      const attrs = data.features[0].attributes;
-      const gush = attrs.GUSH_NUM || attrs.gush_num || '';
-      const helka = attrs.PARCEL_NUM || attrs.parcel_num || '';
-      document.getElementById('f-gush').value = gush;
-      document.getElementById('f-helka').value = helka;
-      tree.gush = String(gush);
-      tree.helka = String(helka);
-      toast('✅ גוש ' + gush + ' חלקה ' + helka);
-    } else {
-      // Fallback: Israel National GIS
-      const url2 = `https://ags.govmap.gov.il/arcgis/rest/services/Parcel/IsraelCadaster/MapServer/0/query?geometry=${x},${y}&geometryType=esriGeometryPoint&inSR=2039&spatialRel=esriSpatialRelIntersects&outFields=*&f=json`;
-      const resp2 = await fetch(url2);
-      const data2 = await resp2.json();
-      if (data2.features && data2.features.length > 0) {
-        const attrs = data2.features[0].attributes;
-        const gush = attrs.GUSH_NUM || attrs.Gush || attrs.gush || '';
-        const helka = attrs.PARCEL_NUM || attrs.Parcel || attrs.helka || '';
-        document.getElementById('f-gush').value = gush;
-        document.getElementById('f-helka').value = helka;
-        tree.gush = String(gush);
-        tree.helka = String(helka);
-        toast('✅ גוש ' + gush + ' חלקה ' + helka);
-      } else {
-        toast('⚠️ לא נמצאה חלקה במיקום זה');
-      }
-    }
-  } catch(e) {
-    toast('⚠️ שגיאה בחיפוש גוש/חלקה. בדוק קליטה');
-    console.warn('Gush/Helka API error:', e);
-  }
-}
-
-// ================================================================
-// ONLINE / OFFLINE INDICATOR + SERVICE WORKER
-// ================================================================
-window.addEventListener('online', _handleNetworkChange);
-window.addEventListener('offline', _handleNetworkChange);
-
-function _handleNetworkChange() {
-  if (navigator.onLine) {
-    setDriveStatus('☁️ Drive מחובר', 'ok');
-    toast('📶 הקליטה חזרה');
-    if (window.gUser && window.gUser.accessToken && currentProjectId) {
-      clearTimeout(window._autoSaveTimer);
-      saveProject().then(() => toast('✅ סונכרן ל-Drive'));
-    }
-  } else {
-    setDriveStatus('📴 אופליין — שמירה מקומית', 'error');
-    toast('📴 אין קליטה — עובד במצב Offline');
-  }
-}
-if (!navigator.onLine) _handleNetworkChange();
-
-// Register Service Worker (inline blob — no extra file needed)
-if ('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE='seker-ezim-v2';
-const CACHE_URLS=['./','./index.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CACHE_URLS).catch(()=>{})));
-  self.skipWaiting();
-});
-self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch',e=>{
-  if(e.request.url.includes('googleapis.com')||e.request.url.includes('accounts.google.com')) return;
-  e.respondWith(fetch(e.request).then(r=>{
-    if(r&&r.status===200){const rc=r.clone();caches.open(CACHE).then(c=>c.put(e.request,rc));}
-    return r;
-  }).catch(()=>caches.match(e.request)));
-});`;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, { scope: './' })
-    .then(() => console.log('✅ SW registered'))
-    .catch(e => console.warn('SW error:', e));
-}
-
-</script>
-<!-- MOVE TREE OVERLAY — crosshair mode -->
-<div id="move-overlay" style="display:none;position:fixed;inset:0;z-index:2000;pointer-events:none">
-  <!-- Dark vignette edges -->
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.35) 100%)"></div>
-  
-  <!-- Top banner -->
-  <div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,0.65);
-    color:white;text-align:center;padding:14px 16px;font-size:15px;font-weight:700;
-    letter-spacing:0.3px;pointer-events:none">
-    🌳 <span id="move-overlay-title">הזז עץ</span>
-    <div style="font-size:12px;font-weight:400;opacity:0.85;margin-top:3px">גרור את המפה — הקרוסהייר מסמן את המיקום החדש</div>
-  </div>
-
-  <!-- Crosshair center -->
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none">
-    <!-- Outer ring -->
-    <div style="width:60px;height:60px;border:3px solid white;border-radius:50%;
-      box-shadow:0 0 0 2px rgba(0,0,0,0.4),0 0 20px rgba(255,255,255,0.3);
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
-    <!-- Cross lines -->
-    <div style="width:40px;height:2px;background:white;box-shadow:0 0 4px rgba(0,0,0,0.5);
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
-    <div style="height:40px;width:2px;background:white;box-shadow:0 0 4px rgba(0,0,0,0.5);
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
-    <!-- Center dot -->
-    <div style="width:8px;height:8px;background:#f5a623;border-radius:50%;border:2px solid white;
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
-  </div>
-
-  <!-- Bottom buttons — pointer-events ON -->
-  <div style="position:absolute;bottom:40px;left:0;right:0;
-    display:flex;justify-content:center;gap:16px;pointer-events:all">
-    <button onclick="cancelMoveTree()" style="
-      padding:14px 28px;border-radius:50px;border:2px solid rgba(255,255,255,0.6);
-      background:rgba(0,0,0,0.55);color:white;font-size:15px;font-weight:700;
-      cursor:pointer;font-family:inherit;backdrop-filter:blur(4px)">
-      ✕ ביטול
-    </button>
-    <button onclick="confirmMoveTree()" style="
-      padding:14px 28px;border-radius:50px;border:none;
-      background:#f5a623;color:white;font-size:15px;font-weight:700;
-      cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(245,166,35,0.5)">
-      ✓ אשר מיקום
-    </button>
-  </div>
-</div>
-<!-- STATS MODAL -->
-<div id="stats-modal" class="hidden" onclick="if(event.target===this)closeStatsModal()">
-  <div class="modal-inner" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2 style="margin:0;font-size:18px;color:#1a4d2e">📈 סטטיסטיקות פרויקט</h2>
-      <button onclick="closeStatsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">✕</button>
-    </div>
-    <div id="stats-content"></div>
-  </div>
-</div>
-
-</body>
-</html>
